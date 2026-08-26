@@ -76,8 +76,8 @@ export function Filters({
         })}
       </div>
 
-      {/* Controls row */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Controls row — spread full-width on mobile, left-packed on desktop */}
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-start">
         {/* Mobile-only date picker (sheet) */}
         <div className="sm:hidden">
           <MobileDatePicker
