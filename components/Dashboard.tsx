@@ -191,25 +191,20 @@ export function Dashboard() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
       {/* Header */}
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span style={{ color: "var(--logo)" }}>
-            <Logo className="h-9 w-auto sm:h-10" />
-          </span>
-          <div className="border-l border-border pl-3">
-            <h1 className="text-sm font-semibold leading-tight sm:text-base">Affiliate Dashboard</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
+      <header className="mb-5 grid grid-cols-[auto_1fr_auto] items-center gap-2">
+        <span className="justify-self-start" style={{ color: "var(--logo)" }}>
+          <Logo className="h-9 w-auto sm:h-10" />
+        </span>
+        <div className="min-w-0 justify-self-center text-center">
+          <h1 className="text-sm font-semibold leading-tight sm:text-base">Affiliate Dashboard</h1>
           {data?.lastScrape && (
-            <div className="text-right text-xs text-text-muted">
-              <div>Last updated</div>
-              <div className="font-medium text-text-secondary tabular-nums whitespace-nowrap">
-                <span className="sm:hidden">{heartbeatShort(data.lastScrape)}</span>
-                <span className="hidden sm:inline">{heartbeatLabel(data.lastScrape)}</span>
-              </div>
-            </div>
+            <p className="truncate text-xs text-text-muted">
+              <span className="sm:hidden">Updated {heartbeatShort(data.lastScrape)}</span>
+              <span className="hidden sm:inline">Updated {heartbeatLabel(data.lastScrape)}</span>
+            </p>
           )}
+        </div>
+        <div className="justify-self-end">
           <ThemeToggle />
         </div>
       </header>

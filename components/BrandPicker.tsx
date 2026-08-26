@@ -6,11 +6,12 @@ interface Props {
   advertisers: { id: string; name: string }[];
   selected: string | null; // advertiserId or null (= all)
   onChange: (id: string | null) => void;
+  className?: string; // extra classes for the trigger button (e.g. "w-full")
 }
 
 /** Styled brand selector: a button that opens a searchable sheet (bottom sheet on
  *  mobile, centered modal on desktop) matching the date picker. */
-export function BrandPicker({ advertisers, selected, onChange }: Props) {
+export function BrandPicker({ advertisers, selected, onChange, className = "" }: Props) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
 
@@ -54,7 +55,7 @@ export function BrandPicker({ advertisers, selected, onChange }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium"
+        className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium ${className}`}
         style={
           selected
             ? { borderColor: "var(--brand)", color: "var(--brand)", background: "var(--surface)" }

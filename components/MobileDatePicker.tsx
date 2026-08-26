@@ -13,6 +13,7 @@ interface Props {
   customEnd: string | null;
   onCustomRange: (start: string, end: string) => void;
   onClearCustom: () => void;
+  className?: string; // extra classes for the trigger button (e.g. "w-full")
 }
 
 const QUICK: { key: RangePreset; label: string }[] = [
@@ -48,6 +49,7 @@ export function MobileDatePicker({
   customEnd,
   onCustomRange,
   onClearCustom,
+  className = "",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [range, setRange] = useState<DateRange | undefined>(
@@ -98,7 +100,7 @@ export function MobileDatePicker({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium"
+        className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium ${className}`}
         style={{ borderColor: "var(--brand)", color: "var(--brand)", background: "var(--surface)" }}
       >
         <span aria-hidden>📅</span>

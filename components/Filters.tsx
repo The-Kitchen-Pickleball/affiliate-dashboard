@@ -76,38 +76,51 @@ export function Filters({
         })}
       </div>
 
-      {/* Controls row — spread full-width on mobile, left-packed on desktop */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-start">
-        {/* Mobile-only date picker (sheet) */}
-        <div className="sm:hidden">
-          <MobileDatePicker
-            preset={preset}
-            onPreset={onPreset}
-            customStart={customStart}
-            customEnd={customEnd}
-            onCustomRange={onCustomRange}
-            onClearCustom={onClearCustom}
-          />
+      {/* MOBILE controls: date + brand fill the row evenly, stepper full-width below */}
+      <div className="flex flex-col gap-2 sm:hidden">
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <MobileDatePicker
+              preset={preset}
+              onPreset={onPreset}
+              customStart={customStart}
+              customEnd={customEnd}
+              onCustomRange={onCustomRange}
+              onClearCustom={onClearCustom}
+              className="w-full"
+            />
+          </div>
+          <div className="flex-1">
+            <BrandPicker
+              advertisers={advertisers}
+              selected={selectedAdvertisers[0] ?? null}
+              onChange={(id) => onAdvertisers(id ? [id] : [])}
+              className="w-full"
+            />
+          </div>
         </div>
+        {singleDay && (
+          <DayStepper
+            fullWidth
+            day={singleDay}
+            today={today}
+            onChange={(d) => onCustomRange(d, d)}
+            onToday={() => {
+              onClearCustom();
+              onPreset("today");
+            }}
+          />
+        )}
+      </div>
 
-        {/* Brand picker (both) */}
+      {/* DESKTOP controls: brand + custom date + stepper, left-packed */}
+      <div className="hidden flex-wrap items-center gap-2 sm:flex">
         <BrandPicker
           advertisers={advertisers}
           selected={selectedAdvertisers[0] ?? null}
           onChange={(id) => onAdvertisers(id ? [id] : [])}
         />
-
-        {/* Desktop-only custom date (calendar modal) */}
-        <div className="hidden sm:block">
-          <DateRangePicker
-            start={customStart}
-            end={customEnd}
-            onApply={onCustomRange}
-            onClear={onClearCustom}
-          />
-        </div>
-
-        {/* Day stepper — inline, only when the window is a single day */}
+        <DateRangePicker start={customStart} end={customEnd} onApply={onCustomRange} onClear={onClearCustom} />
         {singleDay && (
           <DayStepper
             day={singleDay}
