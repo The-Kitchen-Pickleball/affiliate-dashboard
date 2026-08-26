@@ -2,16 +2,17 @@
 
 import type { RangePreset } from "@/lib/analytics";
 import { DateRangePicker } from "./DateRangePicker";
+import { MobileDatePicker } from "./MobileDatePicker";
 
-const ROLLING: { key: RangePreset; label: string }[] = [
-  { key: "7d", label: "Last 7 days" },
-  { key: "30d", label: "Last 30 days" },
-  { key: "90d", label: "Last 90 days" },
-];
-const TO_DATE: { key: RangePreset; label: string }[] = [
-  { key: "wtd", label: "Week to date" },
-  { key: "mtd", label: "Month to date" },
-  { key: "ytd", label: "Year to date" },
+// Desktop shows all presets as pills; mobile uses the slide-up date sheet.
+const PRESETS: { key: RangePreset; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7 days" },
+  { key: "30d", label: "30 days" },
+  { key: "90d", label: "90 days" },
+  { key: "wtd", label: "WTD" },
+  { key: "mtd", label: "MTD" },
+  { key: "ytd", label: "YTD" },
   { key: "all", label: "All time" },
 ];
 
@@ -39,66 +40,47 @@ export function Filters({
   onCustomRange,
   onClearCustom,
 }: Props) {
-  const todayActive = !customStart && preset === "today";
-  const rollingValue = !customStart && ROLLING.some((r) => r.key === preset) ? preset : "";
-  const toDateValue = !customStart && TO_DATE.some((r) => r.key === preset) ? preset : "";
-
-  function pick(value: string) {
-    if (!value) return;
-    onClearCustom();
-    onPreset(value as RangePreset);
-  }
-
   return (
     <div className="flex flex-col gap-3">
-      {/* Date range: Today + a "last N days" dropdown + a "to date" dropdown */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => {
-            onClearCustom();
-            onPreset("today");
-          }}
-          className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
-            todayActive
-              ? "border-transparent text-[var(--brand-ink)]"
-              : "border-border bg-surface text-text-secondary hover:bg-surface-2"
-          }`}
-          style={todayActive ? { background: "var(--brand)" } : undefined}
-        >
-          Today
-        </button>
-
-        <select
-          value={rollingValue}
-          onChange={(e) => pick(e.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text"
-          style={rollingValue ? { borderColor: "var(--brand)", color: "var(--brand)" } : undefined}
-        >
-          <option value="">Last…</option>
-          {ROLLING.map((r) => (
-            <option key={r.key} value={r.key}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={toDateValue}
-          onChange={(e) => pick(e.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text"
-          style={toDateValue ? { borderColor: "var(--brand)", color: "var(--brand)" } : undefined}
-        >
-          <option value="">To date…</option>
-          {TO_DATE.map((r) => (
-            <option key={r.key} value={r.key}>
-              {r.label}
-            </option>
-          ))}
-        </select>
+      {/* Desktop: preset pills */}
+      <div className="hidden flex-wrap gap-1.5 sm:flex">
+        {PRESETS.map((p) => {
+          const active = !customStart && preset === p.key;
+          return (
+            <button
+              key={p.key}
+              onClick={() => {
+                onClearCustom();
+                onPreset(p.key);
+              }}
+              className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+                active
+                  ? "border-transparent text-[var(--brand-ink)]"
+                  : "border-border bg-surface text-text-secondary hover:bg-surface-2"
+              }`}
+              style={active ? { background: "var(--brand)" } : undefined}
+            >
+              {p.label}
+            </button>
+          );
+        })}
       </div>
 
+      {/* Controls row */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Advertiser select via native select for mobile-friendliness */}
+        {/* Mobile-only date picker (sheet) */}
+        <div className="sm:hidden">
+          <MobileDatePicker
+            preset={preset}
+            onPreset={onPreset}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomRange={onCustomRange}
+            onClearCustom={onClearCustom}
+          />
+        </div>
+
+        {/* Brand select (both) */}
         <select
           value={selectedAdvertisers[0] ?? ""}
           onChange={(e) => onAdvertisers(e.target.value ? [e.target.value] : [])}
@@ -112,13 +94,15 @@ export function Filters({
           ))}
         </select>
 
-        {/* Custom date / range — calendar + quick presets */}
-        <DateRangePicker
-          start={customStart}
-          end={customEnd}
-          onApply={onCustomRange}
-          onClear={onClearCustom}
-        />
+        {/* Desktop-only custom date (calendar modal) */}
+        <div className="hidden sm:block">
+          <DateRangePicker
+            start={customStart}
+            end={customEnd}
+            onApply={onCustomRange}
+            onClear={onClearCustom}
+          />
+        </div>
       </div>
     </div>
   );

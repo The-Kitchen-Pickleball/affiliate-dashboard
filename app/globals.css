@@ -73,6 +73,29 @@ body {
   overflow-x: hidden;
 }
 
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
 /* react-day-picker — follow the theme tokens in both light and dark */
 .rdp-root {
   --rdp-accent-color: var(--brand);
