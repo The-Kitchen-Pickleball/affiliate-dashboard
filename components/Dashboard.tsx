@@ -63,7 +63,11 @@ export function Dashboard() {
 
   const view = useMemo(() => {
     if (!data) return null;
-    const nonDate = applyNonDateFilters(data.rows, filters);
+    const all = applyNonDateFilters(data.rows, filters); // every status
+    // Declined commissions were rejected by the platform — exclude them from all
+    // headline numbers, brand table, trend, and averages. They're only surfaced
+    // in the status breakdown below.
+    const active = all.filter((r) => r.status !== "declined");
 
     // A custom range overrides the preset; otherwise use the preset window.
     const custom = Boolean(customStart && customEnd);
@@ -79,11 +83,20 @@ export function Dashboard() {
           ? shortDate(start)
           : `${shortDate(start)} – ${shortDate(end)}`;
 
-    const inWindow = nonDate.filter((r) => r.date >= start && r.date <= end);
+    const inRange = (r: { date: string }) => r.date >= start && r.date <= end;
+    const inWindow = active.filter(inRange); // approved + pending only
     const cur = totals(inWindow);
     const prevTotals = prev
-      ? totals(nonDate.filter((r) => r.date >= prev.start && r.date <= prev.end))
+      ? totals(active.filter((r) => r.date >= prev.start && r.date <= prev.end))
       : null;
+
+    // Status breakdown for the selected window (includes declined).
+    const windowAll = all.filter(inRange);
+    const statusTotals = {
+      approved: totals(windowAll.filter((r) => r.status === "approved")),
+      pending: totals(windowAll.filter((r) => r.status === "pending")),
+      declined: totals(windowAll.filter((r) => r.status === "declined")),
+    };
 
     // Averages over the selected window.
     const days = Math.max(1, Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000) + 1);
@@ -95,14 +108,35 @@ export function Dashboard() {
       days,
     };
 
+    // "On pace" projection — only for to-date periods still in progress.
+    let pace: { label: string; sales: number; commission: number } | null = null;
+    if (!custom && (preset === "wtd" || preset === "mtd" || preset === "ytd")) {
+      const [yy, mm] = end.split("-").map(Number);
+      const totalDays =
+        preset === "wtd"
+          ? 7
+          : preset === "mtd"
+            ? new Date(yy, mm, 0).getDate()
+            : (yy % 4 === 0 && yy % 100 !== 0) || yy % 400 === 0
+              ? 366
+              : 365;
+      if (days < totalDays && days > 0) {
+        const factor = totalDays / days;
+        const label = preset === "wtd" ? "this week" : preset === "mtd" ? "this month" : "this year";
+        pace = { label, sales: cur.sales * factor, commission: cur.commission * factor };
+      }
+    }
+
     return {
       cur,
       avg,
+      pace,
+      statusTotals,
       dow: byDayOfWeek(inWindow), // weekday averages for the selected period
       periodLabel,
       prevTotals,
       comparisonLabel,
-      nonDate, // brand/status-filtered, all dates — the trend chart derives from this
+      nonDate: active, // trend derives from this (declined excluded)
       brands: byBrand(inWindow),
       allBrands: [...new Map(data.rows.map((r) => [r.advertiserId, r.advertiser])).entries()]
         .map(([id, name]) => ({ id, name }))
@@ -230,6 +264,28 @@ export function Dashboard() {
             />
           </div>
 
+          {/* On-pace projection + commission status breakdown */}
+          <div className="rounded-xl border border-border bg-surface p-4">
+            {view.pace && (
+              <div className="mb-3 flex flex-wrap items-baseline gap-x-2 border-b border-border pb-3 text-sm">
+                <span aria-hidden>📈</span>
+                <span className="text-text-secondary">On pace for</span>
+                <span className="font-semibold tabular-nums" style={{ color: "var(--brand)" }}>
+                  {usd(view.pace.commission)}
+                </span>
+                <span className="text-text-secondary">commission {view.pace.label}</span>
+                <span className="text-text-muted">· ~{usd(view.pace.sales)} sales</span>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <StatusStat label="Approved" value={view.statusTotals.approved.commission} color="var(--good)" />
+              <StatusStat label="Pending" value={view.statusTotals.pending.commission} color="var(--text-muted)" />
+              {view.statusTotals.declined.commission > 0 && (
+                <StatusStat label="Declined" value={view.statusTotals.declined.commission} color="var(--bad)" muted />
+              )}
+            </div>
+          </div>
+
           {/* Brand list first (per Dane), then the trend graph */}
           <BrandTable rows={view.brands} />
 
@@ -255,6 +311,26 @@ export function Dashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+function StatusStat({
+  label,
+  value,
+  color,
+  muted,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  muted?: boolean;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
+      <span className={`font-semibold tabular-nums ${muted ? "text-text-muted" : ""}`}>{usd(value)}</span>
+      <span className="text-text-muted">{label}</span>
+    </span>
   );
 }
 
