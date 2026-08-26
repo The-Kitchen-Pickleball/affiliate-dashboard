@@ -70,6 +70,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* react-day-picker — follow the theme tokens in both light and dark */

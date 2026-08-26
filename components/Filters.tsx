@@ -39,8 +39,8 @@ export function Filters({
 }: Props) {
   return (
     <div className="flex flex-col gap-3">
-      {/* Date range presets — horizontal scroll on small screens */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      {/* Date range presets — wrap so all are visible (no scroll cutoff) */}
+      <div className="flex flex-wrap gap-1.5">
         {PRESETS.map((p) => {
           const active = !customStart && preset === p.key;
           return (

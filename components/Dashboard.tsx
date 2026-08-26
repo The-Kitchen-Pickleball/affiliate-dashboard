@@ -16,7 +16,7 @@ import {
   todayCentral,
   totals,
 } from "@/lib/analytics";
-import { usd, num, monthLabel, shortDate, heartbeatLabel, pctChange } from "@/lib/format";
+import { usd, num, monthLabel, shortDate, heartbeatLabel, heartbeatShort, pctChange } from "@/lib/format";
 import { byDayOfWeek } from "@/lib/analytics";
 import { KpiCard } from "./KpiCard";
 import { Logo } from "./Logo";
@@ -169,8 +169,9 @@ export function Dashboard() {
           {data?.lastScrape && (
             <div className="text-right text-xs text-text-muted">
               <div>Last updated</div>
-              <div className="font-medium text-text-secondary tabular-nums">
-                {heartbeatLabel(data.lastScrape)}
+              <div className="font-medium text-text-secondary tabular-nums whitespace-nowrap">
+                <span className="sm:hidden">{heartbeatShort(data.lastScrape)}</span>
+                <span className="hidden sm:inline">{heartbeatLabel(data.lastScrape)}</span>
               </div>
             </div>
           )}
