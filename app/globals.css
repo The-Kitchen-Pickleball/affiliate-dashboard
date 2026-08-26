@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* Light theme (default) */
+:root {
+  --brand: #1b5e43;
+  --brand-ink: #ffffff;
+  --logo: #1b5e43;
+  --bg: #f6f7f5;
+  --surface: #ffffff;
+  --surface-2: #f0f2ee;
+  --border: #e6e8e3;
+  --text: #1a1a19;
+  --text-secondary: #52514e;
+  --text-muted: #8a8a85;
+  --good: #199e70;
+  --bad: #d64545;
+}
+
+/* Dark theme: black + neon green + white text.
+   Applied when the OS is dark (unless the user forced light), and always when
+   the user explicitly picks dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand: #4ade80;
+    --brand-ink: #05140b;
+    --logo: #ffffff;
+    --bg: #000000;
+    --surface: #0d0f0d;
+    --surface-2: #171a17;
+    --border: #262b26;
+    --text: #ffffff;
+    --text-secondary: #d4d8d4;
+    --text-muted: #8b928b;
+    --good: #4ade80;
+    --bad: #ff6b6b;
+  }
+}
+
+:root[data-theme="dark"] {
+  --brand: #4ade80;
+  --brand-ink: #05140b;
+  --logo: #ffffff;
+  --bg: #000000;
+  --surface: #0d0f0d;
+  --surface-2: #171a17;
+  --border: #262b26;
+  --text: #ffffff;
+  --text-secondary: #d4d8d4;
+  --text-muted: #8b928b;
+  --good: #4ade80;
+  --bad: #ff6b6b;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* react-day-picker — follow the theme tokens in both light and dark */
+.rdp-root {
+  --rdp-accent-color: var(--brand);
+  --rdp-accent-background-color: color-mix(in srgb, var(--brand) 20%, transparent);
+  --rdp-today-color: var(--brand);
+  color: var(--text);
+}
+.rdp-chevron {
+  fill: var(--text-secondary);
+}
+.rdp-day_button:hover:not(:disabled) {
+  background-color: var(--surface-2);
+}
+.rdp-selected .rdp-day_button,
+.rdp-range_start .rdp-day_button,
+.rdp-range_end .rdp-day_button {
+  color: var(--brand-ink);
+}
+.rdp-dropdown {
+  color: var(--text);
+  background-color: var(--surface);
+}
