@@ -124,6 +124,51 @@ export function byBrand(rows: Row[]): BrandAgg[] {
   return [...map.values()].sort((x, y) => y.commission - x.commission);
 }
 
+export interface BrandDetail {
+  advertiserId: string;
+  advertiser: string;
+  // Main row totals = approved + pending only (declined excluded), matching KPIs.
+  count: number;
+  sales: number;
+  commission: number;
+  // Commission split by status (for the expandable detail).
+  approvedComm: number;
+  pendingComm: number;
+  declinedComm: number;
+}
+
+/** Per-brand aggregation from the full window (all statuses). Main totals exclude
+ *  declined; the per-status commission split is kept for the expandable rows. */
+export function byBrandDetailed(rows: Row[]): BrandDetail[] {
+  const map = new Map<string, BrandDetail>();
+  for (const r of rows) {
+    let b = map.get(r.advertiserId);
+    if (!b) {
+      b = {
+        advertiserId: r.advertiserId,
+        advertiser: r.advertiser,
+        count: 0,
+        sales: 0,
+        commission: 0,
+        approvedComm: 0,
+        pendingComm: 0,
+        declinedComm: 0,
+      };
+      map.set(r.advertiserId, b);
+    }
+    if (r.status === "declined") {
+      b.declinedComm += r.commission;
+    } else {
+      b.count += 1;
+      b.sales += r.sale;
+      b.commission += r.commission;
+      if (r.status === "approved") b.approvedComm += r.commission;
+      else b.pendingComm += r.commission;
+    }
+  }
+  return [...map.values()].sort((a, b) => b.commission - a.commission);
+}
+
 export interface DayPoint {
   date: string;
   sales: number;

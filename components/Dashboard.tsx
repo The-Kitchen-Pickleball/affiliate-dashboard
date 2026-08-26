@@ -5,7 +5,7 @@ import type { ApiResponse, Status } from "@/lib/types";
 import type { RangePreset } from "@/lib/analytics";
 import {
   applyNonDateFilters,
-  byBrand,
+  byBrandDetailed,
   daily,
   lastNDaysRange,
   monthly,
@@ -137,7 +137,7 @@ export function Dashboard() {
       prevTotals,
       comparisonLabel,
       nonDate: active, // trend derives from this (declined excluded)
-      brands: byBrand(inWindow),
+      brands: byBrandDetailed(windowAll),
       allBrands: [...new Map(data.rows.map((r) => [r.advertiserId, r.advertiser])).entries()]
         .map(([id, name]) => ({ id, name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
