@@ -97,8 +97,7 @@ export function Dashboard() {
     return {
       cur,
       avg,
-      dowPeriod: byDayOfWeek(inWindow), // weekday averages for the selected period
-      dowAll: byDayOfWeek(nonDate), // weekday averages across all history
+      dow: byDayOfWeek(inWindow), // weekday averages for the selected period
       periodLabel,
       prevTotals,
       comparisonLabel,
@@ -164,7 +163,6 @@ export function Dashboard() {
           </span>
           <div className="border-l border-border pl-3">
             <h1 className="text-sm font-semibold leading-tight sm:text-base">Affiliate Dashboard</h1>
-            <p className="text-xs text-text-muted">Commissions across all brands</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -268,12 +266,7 @@ export function Dashboard() {
           />
 
           {/* Averages — below the trend (per Dane), always expanded */}
-          <AveragesSection
-            avg={view.avg}
-            dowPeriod={view.dowPeriod}
-            dowAll={view.dowAll}
-            periodLabel={view.periodLabel}
-          />
+          <AveragesSection avg={view.avg} dow={view.dow} periodLabel={view.periodLabel} />
         </div>
       )}
     </div>

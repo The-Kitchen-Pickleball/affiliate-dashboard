@@ -19,24 +19,20 @@ type DowMetric = "avgComm" | "avgSale";
  *  Secondary: a compact by-weekday breakdown. Always expanded (lives at the bottom). */
 export function AveragesSection({
   avg,
-  dowPeriod,
-  dowAll,
+  dow,
   periodLabel,
 }: {
   avg: Avg;
-  dowPeriod: DowAgg[];
-  dowAll: DowAgg[];
+  dow: DowAgg[];
   periodLabel: string;
 }) {
   const [dowMetric, setDowMetric] = useState<DowMetric>("avgComm");
-  const [dowScope, setDowScope] = useState<"period" | "all">("all");
 
   const stats = [
     { label: "Avg sale / day", value: usd(avg.salePerDay) },
     { label: "Avg comm. / day", value: usd(avg.commPerDay) },
   ];
 
-  const dow = dowScope === "all" ? dowAll : dowPeriod;
   const max = Math.max(...dow.map((d) => d[dowMetric]), 0.0001);
   const best = dow.reduce((b, d) => (d[dowMetric] > b[dowMetric] ? d : b), dow[0]);
   const hasDow = dow.some((d) => d.dayCount > 0);
@@ -65,23 +61,7 @@ export function AveragesSection({
         {/* Secondary: which weekdays sell biggest (compact, muted) */}
         <div className="mt-4 border-t border-border pt-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-text-secondary">Average by day of week</span>
-              <div className="flex overflow-hidden rounded border border-border">
-                {(["all", "period"] as const).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setDowScope(s)}
-                    className={`px-1.5 py-0.5 text-[11px] font-medium ${
-                      dowScope === s ? "text-[var(--brand-ink)]" : "text-text-muted hover:bg-surface-2"
-                    }`}
-                    style={dowScope === s ? { background: "var(--brand)" } : undefined}
-                  >
-                    {s === "all" ? "All time" : "This period"}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <span className="text-xs font-medium text-text-secondary">Average by day of week</span>
             <div className="flex gap-1">
               {(["avgComm", "avgSale"] as DowMetric[]).map((m) => (
                 <button
