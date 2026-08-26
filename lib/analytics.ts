@@ -135,10 +135,13 @@ export interface BrandDetail {
   approvedComm: number;
   pendingComm: number;
   declinedComm: number;
+  // Individual transactions for this brand (all statuses), newest first.
+  items: Row[];
 }
 
 /** Per-brand aggregation from the full window (all statuses). Main totals exclude
- *  declined; the per-status commission split is kept for the expandable rows. */
+ *  declined; the per-status commission split + individual sales are kept for the
+ *  expandable rows. */
 export function byBrandDetailed(rows: Row[]): BrandDetail[] {
   const map = new Map<string, BrandDetail>();
   for (const r of rows) {
@@ -153,9 +156,11 @@ export function byBrandDetailed(rows: Row[]): BrandDetail[] {
         approvedComm: 0,
         pendingComm: 0,
         declinedComm: 0,
+        items: [],
       };
       map.set(r.advertiserId, b);
     }
+    b.items.push(r);
     if (r.status === "declined") {
       b.declinedComm += r.commission;
     } else {
@@ -166,6 +171,7 @@ export function byBrandDetailed(rows: Row[]): BrandDetail[] {
       else b.pendingComm += r.commission;
     }
   }
+  for (const b of map.values()) b.items.sort((a, c) => c.datetime.localeCompare(a.datetime));
   return [...map.values()].sort((a, b) => b.commission - a.commission);
 }
 

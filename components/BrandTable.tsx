@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import type { BrandDetail } from "@/lib/analytics";
-import { usd, num } from "@/lib/format";
+import { usd, num, shortDate } from "@/lib/format";
 import { getBrandLoginUrl } from "@/lib/brandLinks";
+
+const STATUS_COLOR: Record<string, string> = {
+  approved: "var(--good)",
+  pending: "var(--text-muted)",
+  declined: "var(--bad)",
+};
 
 type SortKey = "advertiser" | "count" | "sales" | "commission";
 
@@ -141,10 +147,37 @@ function FragmentRow({ r, isOpen, onToggle }: { r: BrandDetail; isOpen: boolean;
       {isOpen && (
         <tr className="border-t border-border" style={{ background: "var(--surface-2)" }}>
           <td colSpan={4} className="px-3 py-2.5">
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 pl-5 text-xs">
-              <Dot color="var(--good)" label="Approved" value={r.approvedComm} />
-              <Dot color="var(--text-muted)" label="Pending" value={r.pendingComm} />
-              {r.declinedComm > 0 && <Dot color="var(--bad)" label="Declined" value={r.declinedComm} muted />}
+            <div className="pl-5">
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
+                <Dot color="var(--good)" label="Approved" value={r.approvedComm} />
+                <Dot color="var(--text-muted)" label="Pending" value={r.pendingComm} />
+                {r.declinedComm > 0 && <Dot color="var(--bad)" label="Declined" value={r.declinedComm} muted />}
+              </div>
+
+              {r.items.length > 0 && (
+                <div className="mt-2.5 max-h-72 overflow-y-auto rounded-lg border border-border bg-surface">
+                  <div className="flex items-center gap-2 border-b border-border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
+                    <span className="w-16 shrink-0">Date</span>
+                    <span className="flex-1 text-right">Sale</span>
+                    <span className="w-20 text-right">Commission</span>
+                    <span className="w-20 text-right">Status</span>
+                  </div>
+                  {r.items.map((t) => (
+                    <div
+                      key={t.transactionId}
+                      className="flex items-center gap-2 border-b border-border px-3 py-1.5 text-xs last:border-b-0"
+                    >
+                      <span className="w-16 shrink-0 text-text-muted tabular-nums">{shortDate(t.date)}</span>
+                      <span className="flex-1 text-right tabular-nums text-text-secondary">{usd(t.sale)}</span>
+                      <span className="w-20 text-right font-medium tabular-nums">{usd(t.commission)}</span>
+                      <span className="inline-flex w-20 items-center justify-end gap-1">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: STATUS_COLOR[t.status] }} />
+                        <span className="capitalize text-text-muted">{t.status}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </td>
         </tr>
