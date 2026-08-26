@@ -3,6 +3,7 @@
 import type { RangePreset } from "@/lib/analytics";
 import { DateRangePicker } from "./DateRangePicker";
 import { MobileDatePicker } from "./MobileDatePicker";
+import { BrandPicker } from "./BrandPicker";
 
 // Desktop shows all presets as pills; mobile uses the slide-up date sheet.
 const PRESETS: { key: RangePreset; label: string }[] = [
@@ -80,19 +81,12 @@ export function Filters({
           />
         </div>
 
-        {/* Brand select (both) */}
-        <select
-          value={selectedAdvertisers[0] ?? ""}
-          onChange={(e) => onAdvertisers(e.target.value ? [e.target.value] : [])}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text"
-        >
-          <option value="">All brands</option>
-          {advertisers.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
+        {/* Brand picker (both) */}
+        <BrandPicker
+          advertisers={advertisers}
+          selected={selectedAdvertisers[0] ?? null}
+          onChange={(id) => onAdvertisers(id ? [id] : [])}
+        />
 
         {/* Desktop-only custom date (calendar modal) */}
         <div className="hidden sm:block">
