@@ -1,9 +1,10 @@
 "use client";
 
-import type { RangePreset } from "@/lib/analytics";
+import { type RangePreset, todayCentral } from "@/lib/analytics";
 import { DateRangePicker } from "./DateRangePicker";
 import { MobileDatePicker } from "./MobileDatePicker";
 import { BrandPicker } from "./BrandPicker";
+import { DayStepper } from "./DayStepper";
 
 // Desktop shows all presets as pills; mobile uses the slide-up date sheet.
 const PRESETS: { key: RangePreset; label: string }[] = [
@@ -41,6 +42,14 @@ export function Filters({
   onCustomRange,
   onClearCustom,
 }: Props) {
+  const today = todayCentral();
+  const singleDay =
+    customStart && customEnd && customStart === customEnd
+      ? customStart
+      : !customStart && preset === "today"
+        ? today
+        : null;
+
   return (
     <div className="flex flex-col gap-3">
       {/* Desktop: preset pills */}
@@ -97,6 +106,19 @@ export function Filters({
             onClear={onClearCustom}
           />
         </div>
+
+        {/* Day stepper — inline, only when the window is a single day */}
+        {singleDay && (
+          <DayStepper
+            day={singleDay}
+            today={today}
+            onChange={(d) => onCustomRange(d, d)}
+            onToday={() => {
+              onClearCustom();
+              onPreset("today");
+            }}
+          />
+        )}
       </div>
     </div>
   );

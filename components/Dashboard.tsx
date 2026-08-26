@@ -25,7 +25,6 @@ import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { AveragesSection } from "./AveragesSection";
-import { DayStepper } from "./DayStepper";
 
 const COMPARISON_LABEL: Record<RangePreset, string> = {
   today: "vs yesterday",
@@ -206,52 +205,6 @@ export function Dashboard() {
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-5">
-          {(() => {
-            const today = todayCentral();
-            const singleDay =
-              customStart && customEnd && customStart === customEnd
-                ? customStart
-                : !customStart && preset === "today"
-                  ? today
-                  : null;
-            if (singleDay) {
-              return (
-                <DayStepper
-                  day={singleDay}
-                  today={today}
-                  onChange={(d) => {
-                    setCustomStart(d);
-                    setCustomEnd(d);
-                  }}
-                  onToday={() => {
-                    setCustomStart(null);
-                    setCustomEnd(null);
-                    setPreset("today");
-                  }}
-                />
-              );
-            }
-            if (customStart && customEnd) {
-              return (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="rounded-md px-2 py-1 font-medium text-[var(--brand-ink)]" style={{ background: "var(--brand)" }}>
-                    {shortDate(customStart)} – {shortDate(customEnd)}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setCustomStart(null);
-                      setCustomEnd(null);
-                    }}
-                    className="text-text-muted hover:underline"
-                  >
-                    clear
-                  </button>
-                </div>
-              );
-            }
-            return null;
-          })()}
-
           {/* KPIs — 3 across on every screen, compact on mobile */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <KpiCard

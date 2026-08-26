@@ -7,7 +7,7 @@ function shiftDay(day: string, n: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
-/** Arrow through single days. Shown when the current window is one day. */
+/** Arrow through single days. A tight connected control (‹ | day | ›). */
 export function DayStepper({
   day,
   today,
@@ -26,19 +26,28 @@ export function DayStepper({
       ? "Today"
       : new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-  const btn = "rounded-lg border border-border bg-surface px-3 py-1.5 text-base leading-none hover:bg-surface-2 disabled:opacity-30";
+  const arrow = "px-3 py-1.5 text-base leading-none hover:bg-surface-2 disabled:opacity-30";
 
   return (
-    <div className="flex items-center justify-center gap-2">
-      <button onClick={() => onChange(shiftDay(day, -1))} className={btn} aria-label="Previous day">
-        ‹
-      </button>
-      <div className="min-w-[7.5rem] text-center text-sm font-semibold tabular-nums">{label}</div>
-      <button onClick={() => onChange(shiftDay(day, 1))} disabled={atToday} className={btn} aria-label="Next day">
-        ›
-      </button>
+    <div className="flex items-center gap-2 self-start">
+      <div className="inline-flex items-center overflow-hidden rounded-lg border border-border bg-surface">
+        <button onClick={() => onChange(shiftDay(day, -1))} className={arrow} aria-label="Previous day">
+          ‹
+        </button>
+        <div className="min-w-[6.5rem] border-x border-border px-3 py-1.5 text-center text-sm font-semibold tabular-nums">
+          {label}
+        </div>
+        <button
+          onClick={() => onChange(shiftDay(day, 1))}
+          disabled={atToday}
+          className={arrow}
+          aria-label="Next day"
+        >
+          ›
+        </button>
+      </div>
       {day !== today && (
-        <button onClick={onToday} className="ml-1 text-xs font-medium hover:underline" style={{ color: "var(--brand)" }}>
+        <button onClick={onToday} className="text-xs font-medium hover:underline" style={{ color: "var(--brand)" }}>
           Today
         </button>
       )}
