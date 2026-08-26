@@ -18,28 +18,21 @@ async function sha256Hex(s: string): Promise<string> {
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const pw = process.env.DASHBOARD_PASSWORD;
-
-  // Diagnostic: proves middleware ran and whether it can see the password env var.
-  const stamp = (res: NextResponse) => {
-    res.headers.set("x-dash-gate", pw ? "armed" : "disarmed");
-    return res;
-  };
-
   if (pathname.startsWith("/login") || pathname.startsWith("/api/login")) {
-    return stamp(NextResponse.next());
+    return NextResponse.next();
   }
 
-  if (!pw) return stamp(NextResponse.next());
+  const pw = process.env.DASHBOARD_PASSWORD;
+  if (!pw) return NextResponse.next();
 
   const expected = await sha256Hex(pw);
   const cookie = req.cookies.get("dash_auth")?.value;
-  if (cookie === expected) return stamp(NextResponse.next());
+  if (cookie === expected) return NextResponse.next();
 
   const url = req.nextUrl.clone();
   url.pathname = "/login";
   url.searchParams.set("from", pathname);
-  return stamp(NextResponse.redirect(url));
+  return NextResponse.redirect(url);
 }
 
 export const config = {
