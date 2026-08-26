@@ -73,7 +73,7 @@ export function DateRangePicker({ start, end, onApply, onClear }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm"
+        className="inline-flex min-w-[12.5rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm"
         style={
           active
             ? { borderColor: "var(--brand)", color: "var(--brand)", background: "var(--surface)" }

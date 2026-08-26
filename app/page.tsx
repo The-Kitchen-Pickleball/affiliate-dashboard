@@ -7,9 +7,9 @@ export default function Home() {
       <div className="flex-1">
         <Dashboard />
       </div>
-      <footer className="py-5" style={{ background: "var(--brand)" }}>
+      <footer className="py-6" style={{ background: "var(--brand)" }}>
         <div className="flex justify-center" style={{ color: "var(--brand-ink)" }}>
-          <Logo className="h-6 w-auto" />
+          <Logo className="h-9 w-auto" />
         </div>
       </footer>
     </main>
