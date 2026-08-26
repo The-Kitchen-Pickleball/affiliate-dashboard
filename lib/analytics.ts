@@ -1,6 +1,6 @@
 import type { Row, Status } from "./types";
 
-export type RangePreset = "today" | "7d" | "30d" | "mtd" | "90d" | "ytd" | "all";
+export type RangePreset = "today" | "7d" | "30d" | "90d" | "wtd" | "mtd" | "ytd" | "all";
 
 export interface Filters {
   preset: RangePreset;
@@ -36,10 +36,15 @@ export function rangeFor(preset: RangePreset): { start: string; end: string } {
       return { start: addDays(end, -6), end };
     case "30d":
       return { start: addDays(end, -29), end };
-    case "mtd":
-      return { start: `${end.slice(0, 7)}-01`, end };
     case "90d":
       return { start: addDays(end, -89), end };
+    case "wtd": {
+      const [y, m, d] = end.split("-").map(Number);
+      const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0 = Sunday
+      return { start: addDays(end, -dow), end };
+    }
+    case "mtd":
+      return { start: `${end.slice(0, 7)}-01`, end };
     case "ytd":
       return { start: `${end.slice(0, 4)}-01-01`, end };
     case "all":

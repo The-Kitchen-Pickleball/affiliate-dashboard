@@ -30,8 +30,9 @@ const COMPARISON_LABEL: Record<RangePreset, string> = {
   today: "vs yesterday",
   "7d": "vs prev 7 days",
   "30d": "vs prev 30 days",
-  mtd: "vs last month",
   "90d": "vs prev 90 days",
+  wtd: "vs last week",
+  mtd: "vs last month",
   ytd: "vs prev period",
   all: "all time",
 };
