@@ -46,7 +46,7 @@ export function Dashboard() {
   const statuses: Status[] = []; // status filtering removed from UI — always include all
   const [metric, setMetric] = useState<Metric>("commission");
   const [granularity, setGranularity] = useState<Granularity>("day");
-  const [trendRange, setTrendRange] = useState<number>(90); // trend's own daily lookback
+  const [trendRange, setTrendRange] = useState<number>(30); // trend's own daily lookback
   // A custom date range overrides the preset when both are set.
   const [customStart, setCustomStart] = useState<string | null>(null);
   const [customEnd, setCustomEnd] = useState<string | null>(null);
