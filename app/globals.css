@@ -5,6 +5,8 @@
   --brand: #1b5e43;
   --brand-ink: #ffffff;
   --logo: #1b5e43;
+  --footer-bg: #e8eae5;
+  --footer-logo: #1b5e43;
   --bg: #f6f7f5;
   --surface: #ffffff;
   --surface-2: #f0f2ee;
@@ -24,6 +26,8 @@
     --brand: #4ade80;
     --brand-ink: #05140b;
     --logo: #ffffff;
+    --footer-bg: #191c19;
+    --footer-logo: #6b726b;
     --bg: #141714;
     --surface: #1e221e;
     --surface-2: #2a2f2a;
@@ -40,6 +44,8 @@
   --brand: #4ade80;
   --brand-ink: #05140b;
   --logo: #ffffff;
+  --footer-bg: #191c19;
+  --footer-logo: #6b726b;
   --bg: #141714;
   --surface: #1e221e;
   --surface-2: #2a2f2a;
