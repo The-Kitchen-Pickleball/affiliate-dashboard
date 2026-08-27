@@ -218,7 +218,7 @@ export function Dashboard() {
             disabled={refreshing}
             aria-label="Refresh data"
             title="Refresh data"
-            className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm hover:bg-surface-2 disabled:opacity-50"
+            className="rounded-lg border border-border bg-surface px-2 py-1 text-xl leading-none hover:bg-surface-2 disabled:opacity-50"
           >
             <span className="inline-block" style={{ animation: refreshing ? "spin 0.8s linear infinite" : undefined }}>
               ↻
