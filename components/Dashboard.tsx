@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ApiResponse, Status } from "@/lib/types";
 import type { RangePreset } from "@/lib/analytics";
 import {
@@ -51,13 +51,21 @@ export function Dashboard() {
   // A custom date range overrides the preset when both are set.
   const [customStart, setCustomStart] = useState<string | null>(null);
   const [customEnd, setCustomEnd] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/data")
+  const loadData = useCallback(() => {
+    setRefreshing(true);
+    setError(null);
+    fetch("/api/data", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e.error))))
       .then(setData)
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(String(e)))
+      .finally(() => setRefreshing(false));
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filters = { preset, advertisers, statuses };
 
@@ -204,7 +212,18 @@ export function Dashboard() {
             </p>
           )}
         </div>
-        <div className="justify-self-end">
+        <div className="flex items-center gap-2 justify-self-end">
+          <button
+            onClick={loadData}
+            disabled={refreshing}
+            aria-label="Refresh data"
+            title="Refresh data"
+            className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm hover:bg-surface-2 disabled:opacity-50"
+          >
+            <span className="inline-block" style={{ animation: refreshing ? "spin 0.8s linear infinite" : undefined }}>
+              ↻
+            </span>
+          </button>
           <ThemeToggle />
         </div>
       </header>

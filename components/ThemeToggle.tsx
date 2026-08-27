@@ -12,12 +12,8 @@ export function ThemeToggle() {
     try {
       stored = localStorage.getItem("theme");
     } catch {}
-    if (stored === "light" || stored === "dark") {
-      setTheme(stored);
-    } else {
-      const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(sysDark ? "dark" : "light");
-    }
+    // Default to dark unless the user explicitly chose light.
+    setTheme(stored === "light" ? "light" : "dark");
   }, []);
 
   function toggle() {

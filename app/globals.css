@@ -89,6 +89,11 @@ body {
     opacity: 1;
   }
 }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .animate-sheet-up {
   animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
