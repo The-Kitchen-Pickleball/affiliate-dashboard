@@ -56,6 +56,8 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
   const p = getBrandProfile(advertiserId);
   const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
   const [reveal, setReveal] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -70,12 +72,13 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
 
   if (!p) return null;
   const status = p.connected ? STATUS_STYLE[p.connected] : null;
-  const pct = p.commissionPct != null ? `${(p.commissionPct * 100).toFixed(p.commissionPct * 100 % 1 ? 1 : 0)}%` : "—";
+  const pct = p.commissionPct != null ? `${(p.commissionPct * 100).toFixed((p.commissionPct * 100) % 1 ? 1 : 0)}%` : "—";
   const codeText = p.code && p.code !== "NA" ? p.code + (p.discount ? ` · ${p.discount}` : "") : null;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <div className="mb-3 flex items-center gap-2">
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      {/* Header — click to collapse/expand */}
+      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-surface-2" aria-expanded={open}>
         <h2 className="text-base font-semibold">{advertiser}</h2>
         {status && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
@@ -83,54 +86,65 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
             {status.label}
           </span>
         )}
-      </div>
+        <span className="ml-auto text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>
+          ▾
+        </span>
+      </button>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-        <Field label="Platform" value={p.platform} href={p.platformUrl} />
-        <Field label="Our Commission" value={pct} />
-        <Field label="Code (buyer discount)">
-          {codeText ? (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="tabular-nums">{codeText}</span>
-              <CopyButton getText={() => p.code ?? null} title="Copy code" />
-            </span>
-          ) : (
-            <span className="text-text-muted">—</span>
-          )}
-        </Field>
-        <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
-      </div>
+      {open && (
+        <div className="px-4 pb-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+            <Field label="Platform" value={p.platform} href={p.platformUrl} />
+            <Field label="Our Commission" value={pct} />
+            <Field label="Code (buyer discount)">
+              {codeText ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="tabular-nums">{codeText}</span>
+                  <CopyButton getText={() => p.code ?? null} title="Copy code" />
+                </span>
+              ) : (
+                <span className="text-text-muted">—</span>
+              )}
+            </Field>
+            <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
+          </div>
 
-      {/* Login to their affiliate dashboard */}
-      <div className="mt-3 border-t border-border pt-3">
-        <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          <Field label="Login Email">
-            {creds?.email ? (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="truncate">{creds.email}</span>
-                <CopyButton getText={() => creds.email} title="Copy email" />
-              </span>
-            ) : (
-              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
-            )}
-          </Field>
-          <Field label="Login Password">
-            {creds?.password ? (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="tabular-nums tracking-wider">{reveal ? creds.password : "••••••••"}</span>
-                <button type="button" onClick={() => setReveal((v) => !v)} title={reveal ? "Hide" : "Reveal"} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
-                  {reveal ? "Hide" : "Show"}
-                </button>
-                <CopyButton getText={() => creds.password} title="Copy password" />
-              </span>
-            ) : (
-              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
-            )}
-          </Field>
+          {/* Login to their affiliate dashboard — independently collapsible */}
+          <div className="mt-3 border-t border-border pt-3">
+            <button onClick={() => setLoginOpen((v) => !v)} className="flex w-full items-center gap-1.5 text-left" aria-expanded={loginOpen}>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-text-secondary">Affiliate login</span>
+              <span className="text-[10px] text-text-muted transition-transform" style={{ transform: loginOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
+            </button>
+            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3" hidden={!loginOpen}>
+              <Field label="Login Email">
+                {creds?.email ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="truncate">{creds.email}</span>
+                    <CopyButton getText={() => creds.email} title="Copy email" />
+                  </span>
+                ) : (
+                  <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+                )}
+              </Field>
+              <Field label="Login Password">
+                {creds?.password ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="tabular-nums tracking-wider">{reveal ? creds.password : "••••••••"}</span>
+                    <button type="button" onClick={() => setReveal((v) => !v)} title={reveal ? "Hide" : "Reveal"} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
+                      {reveal ? "Hide" : "Show"}
+                    </button>
+                    <CopyButton getText={() => creds.password} title="Copy password" />
+                  </span>
+                ) : (
+                  <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+                )}
+              </Field>
+            </div>
+          </div>
+
+          {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
-      </div>
-
-      {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
+      )}
     </div>
   );
 }
