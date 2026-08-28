@@ -142,7 +142,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         onClick={() => setOpen((v) => !v)}
         role="button"
         aria-expanded={open}
-        className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
+        className="flex cursor-pointer flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 hover:bg-surface-2"
       >
         <h2 className="text-base font-semibold">{advertiser}</h2>
         {status && (
@@ -151,56 +151,70 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             <span className="hidden sm:inline">{status.label}</span>
           </span>
         )}
-        {onBack && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onBack();
-            }}
-            aria-label="All brands"
-            className="rounded-lg border border-border px-2.5 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
+        {/* Platform link + login live up here to use the top-row space */}
+        {p.platformUrl ? (
+          <a
+            href={p.platformUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
+            style={{ color: "var(--brand)" }}
           >
-            ←<span className="hidden sm:inline"> All brands</span>
-          </button>
+            {p.platform}
+            <span aria-hidden className="text-[10px] opacity-60">↗</span>
+          </a>
+        ) : (
+          <span className="text-sm text-text-secondary">{p.platform}</span>
         )}
-        <span
-          aria-hidden
-          className="ml-auto px-1 text-xs text-text-muted transition-transform"
-          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowLogin(true);
+          }}
+          title="Show affiliate login"
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-0.5 text-xs font-medium text-text-secondary hover:bg-surface-2"
         >
-          ▾
-        </span>
+          🔑<span className="hidden sm:inline"> Login</span>
+        </button>
+        <div className="ml-auto flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onBack();
+              }}
+              aria-label="All brands"
+              className="rounded-lg border border-border px-2.5 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
+            >
+              ←<span className="hidden sm:inline"> All brands</span>
+            </button>
+          )}
+          <span
+            aria-hidden
+            className="px-1 text-xs text-text-muted transition-transform"
+            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+          >
+            ▾
+          </span>
+        </div>
       </div>
 
       {open && (
         <div className="px-4 pb-4">
-          {/* Desktop: platform · login · commission · code · store all on one row.
-              Mobile: platform + login on top, the rest as a 2-col grid below. */}
-          <div className="mb-3 flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-10">
-            <div className="flex items-center gap-3">
-              <Field label="Platform" value={p.platform} href={p.platformUrl} />
-              <button
-                onClick={() => setShowLogin(true)}
-                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary hover:bg-surface-2"
-                title="Show affiliate login"
-              >
-                🔑 Login
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:items-center sm:gap-x-10">
-              <Field label="Our Commission" value={pct} />
-              <Field label="Code (buyer discount)">
-                {codeText ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="tabular-nums">{codeText}</span>
-                    <CopyButton getText={() => p.code ?? null} title="Copy code" />
-                  </span>
-                ) : (
-                  <span className="text-text-muted">—</span>
-                )}
-              </Field>
-              <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
-            </div>
+          <div className="flex flex-wrap items-center gap-x-10 gap-y-3">
+            <Field label="Our Commission" value={pct} />
+            <Field label="Code (buyer discount)">
+              {codeText ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="tabular-nums">{codeText}</span>
+                  <CopyButton getText={() => p.code ?? null} title="Copy code" />
+                </span>
+              ) : (
+                <span className="text-text-muted">—</span>
+              )}
+            </Field>
+            <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
