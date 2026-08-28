@@ -156,10 +156,11 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             e.stopPropagation();
             setShowLogin(true);
           }}
-          className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-[11px] font-medium text-text-secondary hover:bg-surface-2"
+          aria-label="Show affiliate login"
+          className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-text-secondary hover:bg-surface-2"
           title="Show affiliate login"
         >
-          🔑 Login
+          🔑<span className="hidden sm:inline"> Login</span>
         </button>
         <div className="ml-auto flex items-center gap-2">
           <span
@@ -175,9 +176,10 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
                 e.stopPropagation();
                 onBack();
               }}
-              className="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
+              aria-label="All brands"
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
             >
-              ← All brands
+              ←<span className="hidden sm:inline"> All brands</span>
             </button>
           )}
         </div>
