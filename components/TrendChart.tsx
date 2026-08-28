@@ -130,11 +130,11 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between text-left"
+        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-surface-2"
       >
         <h2 className="text-sm font-semibold text-text-secondary">Trend</h2>
         <span className="text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>
@@ -143,8 +143,8 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
       </button>
 
       {open && (
-      <>
-      <div className="mb-3 mt-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="px-4 pb-4 sm:px-5">
+      <div className="mb-3 mt-1 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Segmented
             value={granularity}
@@ -200,7 +200,7 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
       {granularity === "month" && (
         <p className="mt-2 text-xs text-text-muted">Last 12 months · lighter bar = current month so far</p>
       )}
-      </>
+      </div>
       )}
     </div>
   );
