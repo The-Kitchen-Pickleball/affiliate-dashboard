@@ -181,7 +181,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
               <Field label="Platform" value={p.platform} href={p.platformUrl} />
               <button
                 onClick={() => setShowLogin(true)}
-                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary hover:bg-surface-2"
                 title="Show affiliate login"
               >
                 🔑 Login
