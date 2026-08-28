@@ -71,6 +71,19 @@ export function Dashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  // Clicking the logo resets the whole dashboard back to its default view.
+  const resetAll = useCallback(() => {
+    setPreset("today");
+    setAdvertisers([]);
+    setMetric("commission");
+    setGranularity("day");
+    setTrendRange(30);
+    setCustomStart(null);
+    setCustomEnd(null);
+    selectBrand(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [selectBrand]);
+
   const loadData = useCallback(() => {
     setRefreshing(true);
     setError(null);
@@ -222,9 +235,15 @@ export function Dashboard() {
     <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
       {/* Header */}
       <header className="mb-5 grid grid-cols-[auto_1fr_auto] items-center gap-2">
-        <span className="justify-self-start" style={{ color: "var(--logo)" }}>
+        <button
+          onClick={resetAll}
+          className="justify-self-start"
+          style={{ color: "var(--logo)" }}
+          title="Reset dashboard"
+          aria-label="Reset dashboard"
+        >
           <Logo className="h-9 w-auto sm:h-10" />
-        </span>
+        </button>
         <div className="min-w-0 justify-self-center text-center">
           <h1 className="text-sm font-semibold leading-tight sm:text-base">Affiliate Dashboard</h1>
           {data?.lastScrape && (
