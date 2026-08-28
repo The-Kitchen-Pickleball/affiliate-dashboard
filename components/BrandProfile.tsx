@@ -175,7 +175,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
       {open && (
         <div className="px-4 pb-4">
           {/* Platform link on the left, affiliate login on the right */}
-          <div className="mb-3 flex items-center justify-between gap-4 border-b border-border pb-3">
+          <div className="mb-3 flex items-center gap-3 border-b border-border pb-3">
             <Field label="Platform" value={p.platform} href={p.platformUrl} />
             <button
               onClick={() => setShowLogin(true)}
