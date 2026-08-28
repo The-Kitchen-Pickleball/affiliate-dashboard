@@ -203,17 +203,8 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
       {open && (
         <div className="px-4 pb-4">
           <div className="flex flex-wrap items-center gap-x-10 gap-y-3">
-            <Field label="Our Commission" value={pct} />
-            <Field label="Code (buyer discount)">
-              {codeText ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="tabular-nums">{codeText}</span>
-                  <CopyButton getText={() => p.code ?? null} title="Copy code" />
-                </span>
-              ) : (
-                <span className="text-text-muted">—</span>
-              )}
-            </Field>
+            <Field label="Commission" value={pct} />
+            <Field label="Code (buyer discount)" value={codeText ?? "—"} />
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
