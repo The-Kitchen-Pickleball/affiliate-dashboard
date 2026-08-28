@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Area,
   AreaChart,
@@ -119,6 +120,7 @@ function CustomTooltip({ active, payload, metric }: TipProps) {
 }
 
 export function TrendChart({ data, metric, onMetric, granularity, onGranularity, range, onRange, onSelect }: Props) {
+  const [open, setOpen] = useState(true);
   const yTick = (v: number) => (metric === "count" ? num(v) : usd(v, { cents: false }));
 
   // Recharts hands us the hovered point's payload on click.
@@ -129,9 +131,21 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <h2 className="text-sm font-semibold text-text-secondary">Trend</h2>
+        <span className="text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>
+          ▾
+        </span>
+      </button>
+
+      {open && (
+      <>
+      <div className="mb-3 mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold text-text-secondary">Trend</h2>
           <Segmented
             value={granularity}
             onChange={(v) => onGranularity(v as Granularity)}
@@ -185,6 +199,8 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
 
       {granularity === "month" && (
         <p className="mt-2 text-xs text-text-muted">Last 12 months · lighter bar = current month so far</p>
+      )}
+      </>
       )}
     </div>
   );

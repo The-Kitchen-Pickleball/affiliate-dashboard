@@ -138,14 +138,24 @@ export function Dashboard() {
       declined: totals(windowAll.filter((r) => r.status === "declined")),
     };
 
-    // Averages over the selected window.
+    // Nominal period length (days elapsed) — used only for the on-pace projection.
     const days = Math.max(1, Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000) + 1);
+    // Denominator for the per-day averages: the ACTUAL span of data in the window
+    // (first sale → last sale). Using the nominal range broke "All time", whose
+    // range starts decades ago and produced a nonsensical ~9700-day denominator.
+    let avgDays = 1;
+    if (inWindow.length) {
+      const ds = inWindow.map((r) => r.date.slice(0, 10));
+      const lo = ds.reduce((a, b) => (b < a ? b : a));
+      const hi = ds.reduce((a, b) => (b > a ? b : a));
+      avgDays = Math.max(1, Math.round((Date.parse(hi) - Date.parse(lo)) / 86_400_000) + 1);
+    }
     const avg = {
       salePerOrder: cur.count ? cur.sales / cur.count : 0,
       commPerOrder: cur.count ? cur.commission / cur.count : 0,
-      salePerDay: cur.sales / days,
-      commPerDay: cur.commission / days,
-      days,
+      salePerDay: cur.sales / avgDays,
+      commPerDay: cur.commission / avgDays,
+      days: avgDays,
     };
 
     // "On pace" projection — only for to-date periods still in progress.

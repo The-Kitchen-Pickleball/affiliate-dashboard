@@ -27,6 +27,7 @@ export function AveragesSection({
   periodLabel: string;
 }) {
   const [dowMetric, setDowMetric] = useState<DowMetric>("avgComm");
+  const [open, setOpen] = useState(true);
 
   const stats = [
     { label: "Avg sale / day", value: usd(avg.salePerDay) },
@@ -39,14 +40,20 @@ export function AveragesSection({
 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="flex flex-wrap items-baseline gap-x-2 border-b border-border px-4 py-3">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`flex w-full flex-wrap items-baseline gap-x-2 px-4 py-3 text-left hover:bg-surface-2 ${open ? "border-b border-border" : ""}`}
+      >
         <h2 className="text-sm font-semibold text-text-secondary">Averages this period</h2>
         <span className="text-xs text-text-muted">· {periodLabel}</span>
-      </div>
+        <span className="ml-auto text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
+      </button>
 
+      {open && (
       <div className="px-4 py-4">
         {/* Prominent: per-day averages */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-wrap gap-x-10 gap-y-3">
           {stats.map((s) => (
             <div key={s.label}>
               <div className="text-[11px] uppercase tracking-wide text-text-muted">{s.label}</div>
@@ -99,6 +106,7 @@ export function AveragesSection({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
