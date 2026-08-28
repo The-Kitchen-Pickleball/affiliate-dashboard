@@ -112,7 +112,7 @@ function LoginModal({
   );
 }
 
-export function BrandProfile({ advertiserId, advertiser }: { advertiserId: string; advertiser: string }) {
+export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserId: string; advertiser: string; onBack?: () => void }) {
   const p = getBrandProfile(advertiserId);
   const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
   const [open, setOpen] = useState(true);
@@ -152,15 +152,25 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
         >
           🔑 Login
         </button>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-label={open ? "Collapse" : "Expand"}
-          className="ml-auto rounded-lg px-2 py-1 text-xs text-text-muted transition-transform hover:bg-surface-2"
-          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
-        >
-          ▾
-        </button>
+        <div className="ml-auto flex items-center gap-1.5">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="rounded-lg border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:bg-surface-2"
+            >
+              ← All brands
+            </button>
+          )}
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={open ? "Collapse" : "Expand"}
+            className="rounded-lg px-2 py-1 text-xs text-text-muted transition-transform hover:bg-surface-2"
+            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+          >
+            ▾
+          </button>
+        </div>
       </div>
 
       {open && (

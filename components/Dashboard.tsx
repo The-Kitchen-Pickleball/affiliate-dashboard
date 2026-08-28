@@ -275,18 +275,8 @@ export function Dashboard() {
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-5">
-          {/* Brand detail: back link + profile card, shown only on a brand page */}
-          {brand && (
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => selectBrand(null)}
-                className="self-start rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text-secondary hover:bg-surface-2"
-              >
-                ← All brands
-              </button>
-              <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} />
-            </div>
-          )}
+          {/* Brand detail: profile card (with its own back button), on a brand page */}
+          {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
 
           {/* KPIs — 3 across on every screen, compact on mobile */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
