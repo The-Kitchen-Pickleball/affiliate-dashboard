@@ -204,7 +204,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         <div className="px-4 pb-4">
           <div className="flex flex-wrap items-center gap-x-10 gap-y-3">
             <Field label="Commission" value={pct} />
-            <Field label="Code (buyer discount)" value={codeText ?? "—"} />
+            <Field label="Discount" value={codeText ?? "—"} />
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
