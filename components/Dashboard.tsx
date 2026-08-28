@@ -356,7 +356,7 @@ export function Dashboard() {
 
           {/* Brand list first (per Dane), then the trend graph. In a brand view this
               is just that one brand — still handy for its transaction drill-down. */}
-          <BrandTable rows={view.brands} onSelectBrand={brand ? undefined : selectBrand} />
+          <BrandTable rows={view.brands} onSelectBrand={brand ? undefined : selectBrand} singleBrand={!!brand} />
 
           <TrendChart
             data={trendData}

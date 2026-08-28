@@ -16,13 +16,69 @@ interface Props {
   rows: BrandDetail[];
   /** When provided, clicking a brand name opens its detail page. */
   onSelectBrand?: (id: string) => void;
+  /** On a single-brand page: render the brand's individual sales directly. */
+  singleBrand?: boolean;
 }
 
-export function BrandTable({ rows, onSelectBrand }: Props) {
+export function BrandTable({ rows, onSelectBrand, singleBrand }: Props) {
   const [sort, setSort] = useState<SortKey>("commission");
   const [asc, setAsc] = useState(false);
   const [open, setOpen] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  // Single-brand view: skip the "By brand → one row → expand" layout and just
+  // list that brand's transactions under an "Individual sales" header.
+  if (singleBrand) {
+    const items = [...(rows[0]?.items ?? [])].sort((a, b) => b.date.localeCompare(a.date));
+    return (
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <button
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-surface-2"
+        >
+          <h2 className="text-sm font-semibold text-text-secondary">
+            Individual sales <span className="font-normal text-text-muted">({items.length})</span>
+          </h2>
+          <span className="text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>
+            ▾
+          </span>
+        </button>
+        <div className="overflow-x-auto" hidden={!open}>
+          <table className="w-full text-sm">
+            <thead className="text-xs text-text-secondary" style={{ background: "var(--surface-2)" }}>
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold">Date</th>
+                <th className="px-3 py-2 text-right font-semibold">Sale</th>
+                <th className="px-3 py-2 text-right font-semibold">Commission</th>
+                <th className="px-3 py-2 text-right font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((t) => (
+                <tr key={t.transactionId} className="border-t border-border">
+                  <td className="whitespace-nowrap px-3 py-2 text-text-muted tabular-nums">{shortDate(t.date)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{usd(t.sale)}</td>
+                  <td className="px-3 py-2 text-right font-medium tabular-nums">{usd(t.commission)}</td>
+                  <td className="px-3 py-2 text-right">
+                    <span className="inline-flex items-center justify-end gap-1">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: STATUS_COLOR[t.status] }} />
+                      <span className="capitalize text-text-muted">{t.status}</span>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-3 py-8 text-center text-text-muted">No sales in this range.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   function toggleRow(id: string) {
     setExpanded((prev) => {
