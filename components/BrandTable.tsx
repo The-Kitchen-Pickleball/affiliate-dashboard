@@ -125,7 +125,7 @@ function FragmentRow({
   return (
     <>
       <tr className="cursor-pointer border-t border-border hover:bg-surface-2" onClick={onToggle}>
-        <td className="px-3 py-2 font-medium">
+        <td className="whitespace-nowrap px-3 py-2 font-medium">
           <span className="inline-flex items-center gap-1.5">
             <span
               className="text-[10px] text-text-muted transition-transform"
@@ -145,7 +145,6 @@ function FragmentRow({
                 title={`View ${r.advertiser} details`}
               >
                 {r.advertiser}
-                <span aria-hidden className="text-[10px] opacity-60">→</span>
               </button>
             ) : (
               r.advertiser

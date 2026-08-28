@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# RPM rebuild backups (local safety net, never commit)
+rpm-backup*.json
