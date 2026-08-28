@@ -144,6 +144,13 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         aria-expanded={open}
         className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
       >
+        <h2 className="text-base font-semibold">{advertiser}</h2>
+        {status && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: status.dot }} />
+            <span className="hidden sm:inline">{status.label}</span>
+          </span>
+        )}
         {onBack && (
           <button
             onClick={(e) => {
@@ -155,13 +162,6 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
           >
             ←<span className="hidden sm:inline"> All brands</span>
           </button>
-        )}
-        <h2 className="text-base font-semibold">{advertiser}</h2>
-        {status && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: status.dot }} />
-            <span className="hidden sm:inline">{status.label}</span>
-          </span>
         )}
         <span
           aria-hidden
