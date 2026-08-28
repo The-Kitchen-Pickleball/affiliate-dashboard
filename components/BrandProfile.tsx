@@ -136,8 +136,14 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      {/* Header: name, status, a Login button, and a collapse caret */}
-      <div className="flex items-center gap-2 px-4 py-3">
+      {/* Header — clicking anywhere on this row collapses/expands the card.
+          The Login and back buttons stop propagation so they don't toggle it. */}
+      <div
+        onClick={() => setOpen((v) => !v)}
+        role="button"
+        aria-expanded={open}
+        className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
+      >
         <h2 className="text-base font-semibold">{advertiser}</h2>
         {status && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
@@ -146,30 +152,34 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
           </span>
         )}
         <button
-          onClick={() => setShowLogin(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowLogin(true);
+          }}
           className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-[11px] font-medium text-text-secondary hover:bg-surface-2"
           title="Show affiliate login"
         >
           🔑 Login
         </button>
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-2">
+          <span
+            aria-hidden
+            className="px-1 text-xs text-text-muted transition-transform"
+            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+          >
+            ▾
+          </span>
           {onBack && (
             <button
-              onClick={onBack}
-              className="rounded-lg border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:bg-surface-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBack();
+              }}
+              className="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
             >
               ← All brands
             </button>
           )}
-          <button
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-label={open ? "Collapse" : "Expand"}
-            className="rounded-lg px-2 py-1 text-xs text-text-muted transition-transform hover:bg-surface-2"
-            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
-          >
-            ▾
-          </button>
         </div>
       </div>
 
