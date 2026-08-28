@@ -9,7 +9,6 @@ const STATUS_STYLE: Record<string, { dot: string; label: string }> = {
   Disconnected: { dot: "var(--bad)", label: "Disconnected" },
 };
 
-/** Small labeled field. `href` makes the value a link; children override the value render. */
 function Field({ label, value, href, children }: { label: string; value?: string | null; href?: string; children?: React.ReactNode }) {
   if (!children && !value) return null;
   return (
@@ -52,12 +51,72 @@ function CopyButton({ getText, title }: { getText: () => string | null; title: s
   );
 }
 
+function LoginModal({
+  advertiser,
+  platformUrl,
+  creds,
+  onClose,
+}: {
+  advertiser: string;
+  platformUrl?: string;
+  creds: { email: string | null; password: string | null } | null;
+  onClose: () => void;
+}) {
+  const [reveal, setReveal] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onClose}>
+      <div className="w-full max-w-sm animate-fade-in rounded-2xl border border-border bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">{advertiser} · Affiliate login</h3>
+          <button onClick={onClose} aria-label="Close" className="rounded-lg px-2 py-0.5 text-text-muted hover:bg-surface-2">✕</button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <Field label="Login Email">
+            {creds?.email ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="truncate">{creds.email}</span>
+                <CopyButton getText={() => creds.email} title="Copy email" />
+              </span>
+            ) : (
+              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+            )}
+          </Field>
+          <Field label="Login Password">
+            {creds?.password ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="tabular-nums tracking-wider">{reveal ? creds.password : "••••••••"}</span>
+                <button type="button" onClick={() => setReveal((v) => !v)} title={reveal ? "Hide" : "Reveal"} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
+                  {reveal ? "Hide" : "Show"}
+                </button>
+                <CopyButton getText={() => creds.password} title="Copy password" />
+              </span>
+            ) : (
+              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+            )}
+          </Field>
+          {platformUrl && (
+            <a href={platformUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium" style={{ background: "var(--brand)", color: "var(--brand-ink)" }}>
+              Open affiliate dashboard ↗
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function BrandProfile({ advertiserId, advertiser }: { advertiserId: string; advertiser: string }) {
   const p = getBrandProfile(advertiserId);
   const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
-  const [reveal, setReveal] = useState(false);
   const [open, setOpen] = useState(true);
-  const [loginOpen, setLoginOpen] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -77,8 +136,8 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      {/* Header — click to collapse/expand */}
-      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-surface-2" aria-expanded={open}>
+      {/* Header: name, status, a Login button, and a collapse caret */}
+      <div className="flex items-center gap-2 px-4 py-3">
         <h2 className="text-base font-semibold">{advertiser}</h2>
         {status && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
@@ -86,10 +145,23 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
             {status.label}
           </span>
         )}
-        <span className="ml-auto text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>
+        <button
+          onClick={() => setShowLogin(true)}
+          className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-[11px] font-medium text-text-secondary hover:bg-surface-2"
+          title="Show affiliate login"
+        >
+          🔑 Login
+        </button>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={open ? "Collapse" : "Expand"}
+          className="ml-auto rounded-lg px-2 py-1 text-xs text-text-muted transition-transform hover:bg-surface-2"
+          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+        >
           ▾
-        </span>
-      </button>
+        </button>
+      </div>
 
       {open && (
         <div className="px-4 pb-4">
@@ -108,43 +180,11 @@ export function BrandProfile({ advertiserId, advertiser }: { advertiserId: strin
             </Field>
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
           </div>
-
-          {/* Login to their affiliate dashboard — independently collapsible */}
-          <div className="mt-3 border-t border-border pt-3">
-            <button onClick={() => setLoginOpen((v) => !v)} className="flex w-full items-center gap-1.5 text-left" aria-expanded={loginOpen}>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-text-secondary">Affiliate login</span>
-              <span className="text-[10px] text-text-muted transition-transform" style={{ transform: loginOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
-            </button>
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3" hidden={!loginOpen}>
-              <Field label="Login Email">
-                {creds?.email ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="truncate">{creds.email}</span>
-                    <CopyButton getText={() => creds.email} title="Copy email" />
-                  </span>
-                ) : (
-                  <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
-                )}
-              </Field>
-              <Field label="Login Password">
-                {creds?.password ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="tabular-nums tracking-wider">{reveal ? creds.password : "••••••••"}</span>
-                    <button type="button" onClick={() => setReveal((v) => !v)} title={reveal ? "Hide" : "Reveal"} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
-                      {reveal ? "Hide" : "Show"}
-                    </button>
-                    <CopyButton getText={() => creds.password} title="Copy password" />
-                  </span>
-                ) : (
-                  <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
-                )}
-              </Field>
-            </div>
-          </div>
-
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
       )}
+
+      {showLogin && <LoginModal advertiser={advertiser} platformUrl={p.platformUrl} creds={creds} onClose={() => setShowLogin(false)} />}
     </div>
   );
 }
