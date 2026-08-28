@@ -144,53 +144,48 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         aria-expanded={open}
         className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
       >
+        {onBack && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onBack();
+            }}
+            aria-label="All brands"
+            className="rounded-lg border border-border px-2.5 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
+          >
+            ←<span className="hidden sm:inline"> All brands</span>
+          </button>
+        )}
         <h2 className="text-base font-semibold">{advertiser}</h2>
-        {/* Only surface status when something needs attention — a Connected brand
-            shows nothing, so the badge is a real flag (Disconnected/Manual) not noise. */}
-        {status && p.connected !== "Connected" && (
+        {status && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: status.dot }} />
-            {status.label}
+            <span className="hidden sm:inline">{status.label}</span>
           </span>
         )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowLogin(true);
-          }}
-          aria-label="Show affiliate login"
-          className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-text-secondary hover:bg-surface-2"
-          title="Show affiliate login"
+        <span
+          aria-hidden
+          className="ml-auto px-1 text-xs text-text-muted transition-transform"
+          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
         >
-          🔑<span className="hidden sm:inline"> Login</span>
-        </button>
-        <div className="ml-auto flex items-center gap-2">
-          <span
-            aria-hidden
-            className="px-1 text-xs text-text-muted transition-transform"
-            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
-          >
-            ▾
-          </span>
-          {onBack && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onBack();
-              }}
-              aria-label="All brands"
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
-            >
-              ←<span className="hidden sm:inline"> All brands</span>
-            </button>
-          )}
-        </div>
+          ▾
+        </span>
       </div>
 
       {open && (
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+          {/* Platform link on the left, affiliate login on the right */}
+          <div className="mb-3 flex items-center justify-between gap-4 border-b border-border pb-3">
             <Field label="Platform" value={p.platform} href={p.platformUrl} />
+            <button
+              onClick={() => setShowLogin(true)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
+              title="Show affiliate login"
+            >
+              🔑 Login
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
             <Field label="Our Commission" value={pct} />
             <Field label="Code (buyer discount)">
               {codeText ? (
