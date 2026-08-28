@@ -71,18 +71,11 @@ export function Dashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Clicking the logo resets the whole dashboard back to its default view.
+  // Clicking the logo does a full refresh back to the default home view —
+  // reloads the page (fresh data) and clears any ?brand / filters via the URL.
   const resetAll = useCallback(() => {
-    setPreset("today");
-    setAdvertisers([]);
-    setMetric("commission");
-    setGranularity("day");
-    setTrendRange(30);
-    setCustomStart(null);
-    setCustomEnd(null);
-    selectBrand(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [selectBrand]);
+    window.location.assign("/");
+  }, []);
 
   const loadData = useCallback(() => {
     setRefreshing(true);
