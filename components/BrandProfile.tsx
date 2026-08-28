@@ -1,0 +1,136 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { getBrandProfile } from "@/lib/brandProfiles";
+
+const STATUS_STYLE: Record<string, { dot: string; label: string }> = {
+  Connected: { dot: "var(--good)", label: "Connected" },
+  "Manual Process": { dot: "#eab308", label: "Manual process" },
+  Disconnected: { dot: "var(--bad)", label: "Disconnected" },
+};
+
+/** Small labeled field. `href` makes the value a link; children override the value render. */
+function Field({ label, value, href, children }: { label: string; value?: string | null; href?: string; children?: React.ReactNode }) {
+  if (!children && !value) return null;
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] uppercase tracking-wide text-text-muted">{label}</div>
+      <div className="truncate text-sm font-medium">
+        {children ??
+          (href ? (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: "var(--brand)" }}>
+              <span className="truncate">{value}</span>
+              <span aria-hidden className="text-[10px] opacity-60">↗</span>
+            </a>
+          ) : (
+            value
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function CopyButton({ getText, title }: { getText: () => string | null; title: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={async () => {
+        const t = getText();
+        if (!t) return;
+        try {
+          await navigator.clipboard.writeText(t);
+          setDone(true);
+          setTimeout(() => setDone(false), 1200);
+        } catch {}
+      }}
+      className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2"
+    >
+      {done ? "✓ Copied" : "Copy"}
+    </button>
+  );
+}
+
+export function BrandProfile({ advertiserId, advertiser }: { advertiserId: string; advertiser: string }) {
+  const p = getBrandProfile(advertiserId);
+  const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
+  const [reveal, setReveal] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/credentials?brand=${encodeURIComponent(advertiserId)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => live && setCreds(d))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [advertiserId]);
+
+  if (!p) return null;
+  const status = p.connected ? STATUS_STYLE[p.connected] : null;
+  const pct = p.commissionPct != null ? `${(p.commissionPct * 100).toFixed(p.commissionPct * 100 % 1 ? 1 : 0)}%` : "—";
+  const codeText = p.code && p.code !== "NA" ? p.code + (p.discount ? ` · ${p.discount}` : "") : null;
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <h2 className="text-base font-semibold">{advertiser}</h2>
+        {status && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: status.dot }} />
+            {status.label}
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+        <Field label="Platform" value={p.platform} href={p.platformUrl} />
+        <Field label="Our Commission" value={pct} />
+        <Field label="Code (buyer discount)">
+          {codeText ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="tabular-nums">{codeText}</span>
+              <CopyButton getText={() => p.code ?? null} title="Copy code" />
+            </span>
+          ) : (
+            <span className="text-text-muted">—</span>
+          )}
+        </Field>
+        <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
+      </div>
+
+      {/* Login to their affiliate dashboard */}
+      <div className="mt-3 border-t border-border pt-3">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+          <Field label="Login Email">
+            {creds?.email ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="truncate">{creds.email}</span>
+                <CopyButton getText={() => creds.email} title="Copy email" />
+              </span>
+            ) : (
+              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+            )}
+          </Field>
+          <Field label="Login Password">
+            {creds?.password ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="tabular-nums tracking-wider">{reveal ? creds.password : "••••••••"}</span>
+                <button type="button" onClick={() => setReveal((v) => !v)} title={reveal ? "Hide" : "Reveal"} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
+                  {reveal ? "Hide" : "Show"}
+                </button>
+                <CopyButton getText={() => creds.password} title="Copy password" />
+              </span>
+            ) : (
+              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+            )}
+          </Field>
+        </div>
+      </div>
+
+      {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
+    </div>
+  );
+}

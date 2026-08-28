@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { BrandDetail } from "@/lib/analytics";
 import { usd, num, shortDate } from "@/lib/format";
-import { getBrandLoginUrl } from "@/lib/brandLinks";
 
 const STATUS_COLOR: Record<string, string> = {
   approved: "var(--good)",
@@ -15,9 +14,11 @@ type SortKey = "advertiser" | "count" | "sales" | "commission";
 
 interface Props {
   rows: BrandDetail[];
+  /** When provided, clicking a brand name opens its detail page. */
+  onSelectBrand?: (id: string) => void;
 }
 
-export function BrandTable({ rows }: Props) {
+export function BrandTable({ rows, onSelectBrand }: Props) {
   const [sort, setSort] = useState<SortKey>("commission");
   const [asc, setAsc] = useState(false);
   const [open, setOpen] = useState(true);
@@ -92,6 +93,7 @@ export function BrandTable({ rows }: Props) {
                   r={r}
                   isOpen={isOpen}
                   onToggle={() => toggleRow(r.advertiserId)}
+                  onSelectBrand={onSelectBrand}
                 />
               );
             })}
@@ -109,8 +111,17 @@ export function BrandTable({ rows }: Props) {
   );
 }
 
-function FragmentRow({ r, isOpen, onToggle }: { r: BrandDetail; isOpen: boolean; onToggle: () => void }) {
-  const url = getBrandLoginUrl(r.advertiserId);
+function FragmentRow({
+  r,
+  isOpen,
+  onToggle,
+  onSelectBrand,
+}: {
+  r: BrandDetail;
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelectBrand?: (id: string) => void;
+}) {
   return (
     <>
       <tr className="cursor-pointer border-t border-border hover:bg-surface-2" onClick={onToggle}>
@@ -122,19 +133,20 @@ function FragmentRow({ r, isOpen, onToggle }: { r: BrandDetail; isOpen: boolean;
             >
               ▸
             </span>
-            {url ? (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+            {onSelectBrand ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectBrand(r.advertiserId);
+                }}
                 className="inline-flex items-center gap-1 hover:underline"
                 style={{ color: "var(--brand)" }}
-                title={`Open ${r.advertiser} affiliate login`}
+                title={`View ${r.advertiser} details`}
               >
                 {r.advertiser}
-                <span aria-hidden className="text-[10px] opacity-60">↗</span>
-              </a>
+                <span aria-hidden className="text-[10px] opacity-60">→</span>
+              </button>
             ) : (
               r.advertiser
             )}

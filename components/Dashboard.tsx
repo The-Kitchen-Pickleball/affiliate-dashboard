@@ -24,6 +24,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
+import { BrandProfile } from "./BrandProfile";
 import { AveragesSection } from "./AveragesSection";
 
 const COMPARISON_LABEL: Record<RangePreset, string> = {
@@ -52,6 +53,23 @@ export function Dashboard() {
   const [customStart, setCustomStart] = useState<string | null>(null);
   const [customEnd, setCustomEnd] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
+  const [brand, setBrand] = useState<string | null>(null);
+
+  // Initialise from the URL and keep in sync with the browser back/forward buttons.
+  useEffect(() => {
+    const read = () => setBrand(new URLSearchParams(window.location.search).get("brand"));
+    read();
+    window.addEventListener("popstate", read);
+    return () => window.removeEventListener("popstate", read);
+  }, []);
+
+  const selectBrand = useCallback((id: string | null) => {
+    setBrand(id);
+    const url = id ? `?brand=${encodeURIComponent(id)}` : window.location.pathname;
+    window.history.pushState({}, "", url);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const loadData = useCallback(() => {
     setRefreshing(true);
@@ -67,7 +85,8 @@ export function Dashboard() {
     loadData();
   }, [loadData]);
 
-  const filters = { preset, advertisers, statuses };
+  // When viewing a brand's detail page, scope every number to just that brand.
+  const filters = { preset, advertisers: brand ? [brand] : advertisers, statuses };
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -151,7 +170,10 @@ export function Dashboard() {
         .sort((a, b) => a.name.localeCompare(b.name)),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, preset, customStart, customEnd, advertisers, statuses]);
+  }, [data, preset, customStart, customEnd, advertisers, statuses, brand]);
+
+  const brandName =
+    brand && data ? data.rows.find((r) => r.advertiserId === brand)?.advertiser ?? brand : null;
 
   // Derive the chart series — INDEPENDENT of the page date filter. Daily uses its
   // own lookback (trendRange); monthly shows the last 12 months.
@@ -253,6 +275,19 @@ export function Dashboard() {
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-5">
+          {/* Brand detail: back link + profile card, shown only on a brand page */}
+          {brand && (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => selectBrand(null)}
+                className="self-start rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text-secondary hover:bg-surface-2"
+              >
+                ← All brands
+              </button>
+              <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} />
+            </div>
+          )}
+
           {/* KPIs — 3 across on every screen, compact on mobile */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <KpiCard
@@ -300,8 +335,9 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Brand list first (per Dane), then the trend graph */}
-          <BrandTable rows={view.brands} />
+          {/* Brand list first (per Dane), then the trend graph. In a brand view this
+              is just that one brand — still handy for its transaction drill-down. */}
+          <BrandTable rows={view.brands} onSelectBrand={brand ? undefined : selectBrand} />
 
           <TrendChart
             data={trendData}
