@@ -174,30 +174,33 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
 
       {open && (
         <div className="px-4 pb-4">
-          {/* Platform link on the left, affiliate login on the right */}
-          <div className="mb-3 flex items-center gap-3 border-b border-border pb-3">
-            <Field label="Platform" value={p.platform} href={p.platformUrl} />
-            <button
-              onClick={() => setShowLogin(true)}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
-              title="Show affiliate login"
-            >
-              🔑 Login
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-            <Field label="Our Commission" value={pct} />
-            <Field label="Code (buyer discount)">
-              {codeText ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="tabular-nums">{codeText}</span>
-                  <CopyButton getText={() => p.code ?? null} title="Copy code" />
-                </span>
-              ) : (
-                <span className="text-text-muted">—</span>
-              )}
-            </Field>
-            <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
+          {/* Desktop: platform · login · commission · code · store all on one row.
+              Mobile: platform + login on top, the rest as a 2-col grid below. */}
+          <div className="mb-3 flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-10">
+            <div className="flex items-center gap-3">
+              <Field label="Platform" value={p.platform} href={p.platformUrl} />
+              <button
+                onClick={() => setShowLogin(true)}
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
+                title="Show affiliate login"
+              >
+                🔑 Login
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:items-center sm:gap-x-10">
+              <Field label="Our Commission" value={pct} />
+              <Field label="Code (buyer discount)">
+                {codeText ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="tabular-nums">{codeText}</span>
+                    <CopyButton getText={() => p.code ?? null} title="Copy code" />
+                  </span>
+                ) : (
+                  <span className="text-text-muted">—</span>
+                )}
+              </Field>
+              <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
+            </div>
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
