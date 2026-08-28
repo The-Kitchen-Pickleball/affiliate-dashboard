@@ -46,16 +46,77 @@ function CopyButton({ getText, title }: { getText: () => string | null; title: s
       }}
       className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2"
     >
-      {done ? "✓" : "Copy"}
+      {done ? "✓ Copied" : "Copy"}
     </button>
+  );
+}
+
+function LoginModal({
+  advertiser,
+  platformUrl,
+  creds,
+  onClose,
+}: {
+  advertiser: string;
+  platformUrl?: string;
+  creds: { email: string | null; password: string | null } | null;
+  onClose: () => void;
+}) {
+  const [reveal, setReveal] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onClose}>
+      <div className="w-full max-w-sm animate-fade-in rounded-2xl border border-border bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">{advertiser} · Affiliate login</h3>
+          <button onClick={onClose} aria-label="Close" className="rounded-lg px-2 py-0.5 text-text-muted hover:bg-surface-2">✕</button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <Field label="Login Email">
+            {creds?.email ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="truncate">{creds.email}</span>
+                <CopyButton getText={() => creds.email} title="Copy email" />
+              </span>
+            ) : (
+              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+            )}
+          </Field>
+          <Field label="Login Password">
+            {creds?.password ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="tabular-nums tracking-wider">{reveal ? creds.password : "••••••••"}</span>
+                <button type="button" onClick={() => setReveal((v) => !v)} title={reveal ? "Hide" : "Reveal"} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
+                  {reveal ? "Hide" : "Show"}
+                </button>
+                <CopyButton getText={() => creds.password} title="Copy password" />
+              </span>
+            ) : (
+              <span className="text-text-muted">{creds === null ? "…" : "not set"}</span>
+            )}
+          </Field>
+          {platformUrl && (
+            <a href={platformUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium" style={{ background: "var(--brand)", color: "var(--brand-ink)" }}>
+              Open affiliate dashboard ↗
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserId: string; advertiser: string; onBack?: () => void }) {
   const p = getBrandProfile(advertiserId);
   const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
-  const [reveal, setReveal] = useState(false);
   const [open, setOpen] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -75,71 +136,61 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      {/* Header — back button (left), name, status; clicking the row toggles collapse */}
+      {/* Header — clicking anywhere on this row collapses/expands the card.
+          The Login and back buttons stop propagation so they don't toggle it. */}
       <div
         onClick={() => setOpen((v) => !v)}
         role="button"
         aria-expanded={open}
         className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
       >
-        {onBack && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onBack();
-            }}
-            aria-label="All brands"
-            className="rounded-lg border border-border px-2.5 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
-          >
-            ←<span className="hidden sm:inline"> All brands</span>
-          </button>
-        )}
         <h2 className="text-base font-semibold">{advertiser}</h2>
-        {status && (
+        {/* Only surface status when something needs attention — a Connected brand
+            shows nothing, so the badge is a real flag (Disconnected/Manual) not noise. */}
+        {status && p.connected !== "Connected" && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: status.dot }} />
-            <span className="hidden sm:inline">{status.label}</span>
+            {status.label}
           </span>
         )}
-        <span
-          aria-hidden
-          className="ml-auto px-1 text-xs text-text-muted transition-transform"
-          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowLogin(true);
+          }}
+          aria-label="Show affiliate login"
+          className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-text-secondary hover:bg-surface-2"
+          title="Show affiliate login"
         >
-          ▾
-        </span>
+          🔑<span className="hidden sm:inline"> Login</span>
+        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <span
+            aria-hidden
+            className="px-1 text-xs text-text-muted transition-transform"
+            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+          >
+            ▾
+          </span>
+          {onBack && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onBack();
+              }}
+              aria-label="All brands"
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
+            >
+              ←<span className="hidden sm:inline"> All brands</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {open && (
         <div className="px-4 pb-4">
-          {/* Platform on the left, affiliate login on the right */}
-          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-border pb-3">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
             <Field label="Platform" value={p.platform} href={p.platformUrl} />
-            <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-wide text-text-muted">Affiliate Login</div>
-              <div className="mt-0.5 flex flex-col gap-1 text-sm">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="truncate">{creds?.email ?? (creds === null ? "…" : "not set")}</span>
-                  {creds?.email && <CopyButton getText={() => creds.email} title="Copy email" />}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="tabular-nums tracking-wider">
-                    {creds?.password ? (reveal ? creds.password : "••••••••") : creds === null ? "…" : "not set"}
-                  </span>
-                  {creds?.password && (
-                    <>
-                      <button type="button" onClick={() => setReveal((v) => !v)} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-secondary hover:bg-surface-2">
-                        {reveal ? "Hide" : "Show"}
-                      </button>
-                      <CopyButton getText={() => creds.password} title="Copy password" />
-                    </>
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-x-4 gap-y-3 pt-3">
             <Field label="Our Commission" value={pct} />
             <Field label="Code (buyer discount)">
               {codeText ? (
@@ -153,10 +204,11 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             </Field>
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
           </div>
-
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
       )}
+
+      {showLogin && <LoginModal advertiser={advertiser} platformUrl={p.platformUrl} creds={creds} onClose={() => setShowLogin(false)} />}
     </div>
   );
 }
