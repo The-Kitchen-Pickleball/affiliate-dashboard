@@ -145,7 +145,9 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
       >
         <h2 className="text-base font-semibold">{advertiser}</h2>
-        {status && (
+        {/* Only surface status when something needs attention — a Connected brand
+            shows nothing, so the badge is a real flag (Disconnected/Manual) not noise. */}
+        {status && p.connected !== "Connected" && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: status.dot }} />
             {status.label}
