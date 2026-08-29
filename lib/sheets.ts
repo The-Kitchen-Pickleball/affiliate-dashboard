@@ -42,7 +42,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const sheets = google.sheets({ version: "v4", auth: await auth.getClient() as never });
 
   const [commRes, statusRes] = await Promise.all([
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${COMMISSIONS_TAB}!A:H` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${COMMISSIONS_TAB}!A:V` }),
     sheets.spreadsheets.values
       .get({ spreadsheetId: SHEET_ID, range: `${STATUS_TAB}!A2` })
       .catch(() => null),
@@ -58,21 +58,31 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const iSale = idx("sale_amount");
   const iComm = idx("commission_amount");
   const iStatus = idx("status");
+  // RPM stores its real bundled order count in order_ref (see rpm/src/sheets.js).
+  const iOrders = idx("order_ref");
 
   const rows: Row[] = [];
   for (let i = 1; i < values.length; i++) {
     const r = values[i];
     const datetime = String(r[iDate] ?? "");
     if (!datetime) continue;
+    const advertiserId = String(r[iAdvId] ?? "").toLowerCase();
+    // Only RPM carries a bundled order count in order_ref; everything else is 1
+    // order per row. A present value is used even if 0 (a commission adjustment
+    // with no new orders); an empty cell falls back to 1.
+    const ocRaw = String(r[iOrders] ?? "").trim();
+    const oc = parseInt(ocRaw, 10);
+    const orders = advertiserId === "rpm-pickleball" && ocRaw !== "" && Number.isFinite(oc) ? oc : 1;
     rows.push({
       transactionId: String(r[iTx] ?? ""),
-      advertiserId: String(r[iAdvId] ?? "").toLowerCase(),
+      advertiserId,
       advertiser: String(r[iAdv] ?? r[iAdvId] ?? "Unknown"),
       date: datetime.slice(0, 10),
       datetime,
       sale: toDollars(r[iSale]),
       commission: toDollars(r[iComm]),
       status: normalizeStatus(r[iStatus]),
+      orders,
     });
   }
 

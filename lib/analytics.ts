@@ -96,12 +96,14 @@ export interface Totals {
 
 export function totals(rows: Row[]): Totals {
   let sales = 0,
-    commission = 0;
+    commission = 0,
+    count = 0;
   for (const r of rows) {
     sales += r.sale;
     commission += r.commission;
+    count += r.orders;
   }
-  return { sales, commission, count: rows.length };
+  return { sales, commission, count };
 }
 
 export interface BrandAgg extends Totals {
@@ -119,7 +121,7 @@ export function byBrand(rows: Row[]): BrandAgg[] {
     }
     a.sales += r.sale;
     a.commission += r.commission;
-    a.count += 1;
+    a.count += r.orders;
   }
   return [...map.values()].sort((x, y) => y.commission - x.commission);
 }
@@ -164,7 +166,7 @@ export function byBrandDetailed(rows: Row[]): BrandDetail[] {
     if (r.status === "declined") {
       b.declinedComm += r.commission;
     } else {
-      b.count += 1;
+      b.count += r.orders;
       b.sales += r.sale;
       b.commission += r.commission;
       if (r.status === "approved") b.approvedComm += r.commission;
@@ -194,7 +196,7 @@ export function daily(rows: Row[], start: string, end: string): DayPoint[] {
     }
     p.sales += r.sale;
     p.commission += r.commission;
-    p.count += 1;
+    p.count += r.orders;
   }
   const out: DayPoint[] = [];
   let cursor = start;
@@ -255,7 +257,7 @@ export function monthly(rows: Row[], lastN = 12): MonthPoint[] {
     }
     p.sales += r.sale;
     p.commission += r.commission;
-    p.count += 1;
+    p.count += r.orders;
   }
   const arr = [...map.values()].sort((a, b) => a.month.localeCompare(b.month));
   return lastN > 0 ? arr.slice(-lastN) : arr;
@@ -288,7 +290,7 @@ export function byDayOfWeek(rows: Row[]): DowAgg[] {
     }
     a.sale += r.sale;
     a.comm += r.commission;
-    a.count += 1;
+    a.count += r.orders;
     a.dates.add(r.date);
   }
   return DOW_LABELS.map((label, dow) => {

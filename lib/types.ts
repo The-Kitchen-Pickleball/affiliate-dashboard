@@ -13,6 +13,10 @@ export interface Row {
   sale: number;
   commission: number;
   status: Status;
+  /** Real number of underlying orders this row represents. 1 for normal per-order
+   *  rows; for RPM (delta-based) a single row bundles many orders, so this carries
+   *  the true count (from `order_ref`) and the dashboard sums it for "# of Sales". */
+  orders: number;
 }
 
 export interface ApiResponse {
