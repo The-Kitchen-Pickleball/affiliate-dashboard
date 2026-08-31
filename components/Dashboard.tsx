@@ -301,7 +301,7 @@ export function Dashboard() {
           {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
 
           {/* KPIs — 3 across on every screen, compact on mobile */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-[1.25fr_1.25fr_1fr] gap-2 sm:grid-cols-3 sm:gap-3">
             <KpiCard
               label="Total Sales"
               value={usd(view.cur.sales)}

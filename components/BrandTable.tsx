@@ -95,11 +95,16 @@ export function BrandTable({ rows, onSelectBrand, singleBrand }: Props) {
     return asc ? d : -d;
   });
 
+  // Each brand's share of the period total (for the % under its numbers).
+  const totalSales = rows.reduce((s, r) => s + r.sales, 0);
+  const totalComm = rows.reduce((s, r) => s + r.commission, 0);
+  const pctOf = (v: number, total: number) => (total ? `${((v / total) * 100).toFixed(1)}%` : "—");
+
   function header(key: SortKey, label: string, alignRight = false) {
     const active = sort === key;
     return (
       <th
-        className={`cursor-pointer select-none px-3 py-2 font-semibold ${alignRight ? "text-right" : "text-left"}`}
+        className={`cursor-pointer select-none whitespace-nowrap px-3 py-2 font-semibold ${alignRight ? "text-right" : "text-left"}`}
         onClick={() => {
           if (active) setAsc(!asc);
           else {
@@ -150,6 +155,8 @@ export function BrandTable({ rows, onSelectBrand, singleBrand }: Props) {
                   isOpen={isOpen}
                   onToggle={() => toggleRow(r.advertiserId)}
                   onSelectBrand={onSelectBrand}
+                  salesShare={pctOf(r.sales, totalSales)}
+                  commShare={pctOf(r.commission, totalComm)}
                 />
               );
             })}
@@ -172,11 +179,15 @@ function FragmentRow({
   isOpen,
   onToggle,
   onSelectBrand,
+  salesShare,
+  commShare,
 }: {
   r: BrandDetail;
   isOpen: boolean;
   onToggle: () => void;
   onSelectBrand?: (id: string) => void;
+  salesShare: string;
+  commShare: string;
 }) {
   return (
     <>
@@ -208,8 +219,14 @@ function FragmentRow({
           </span>
         </td>
         <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{num(r.count)}</td>
-        <td className="px-3 py-2 text-right tabular-nums">{usd(r.sales)}</td>
-        <td className="px-3 py-2 text-right font-medium tabular-nums">{usd(r.commission)}</td>
+        <td className="px-3 py-2 text-right tabular-nums">
+          <div>{usd(r.sales)}</div>
+          <div className="text-[11px] text-text-muted">{salesShare}</div>
+        </td>
+        <td className="px-3 py-2 text-right font-medium tabular-nums">
+          <div>{usd(r.commission)}</div>
+          <div className="text-[11px] font-normal text-text-muted">{commShare}</div>
+        </td>
       </tr>
       {isOpen && (
         <tr className="border-t border-border" style={{ background: "var(--surface-2)" }}>
