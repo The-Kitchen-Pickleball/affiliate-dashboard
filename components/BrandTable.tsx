@@ -48,19 +48,19 @@ export function BrandTable({ rows, onSelectBrand, singleBrand }: Props) {
           <table className="w-full text-sm">
             <thead className="text-xs text-text-secondary" style={{ background: "var(--surface-2)" }}>
               <tr>
-                <th className="px-3 py-2 text-left font-semibold">Date</th>
-                <th className="px-3 py-2 text-right font-semibold">Sale</th>
-                <th className="px-3 py-2 text-right font-semibold">Commission</th>
-                <th className="px-3 py-2 text-right font-semibold">Status</th>
+                <th className="px-2 py-2 sm:px-3 text-left font-semibold">Date</th>
+                <th className="px-2 py-2 sm:px-3 text-right font-semibold">Sale</th>
+                <th className="px-2 py-2 sm:px-3 text-right font-semibold">Commission</th>
+                <th className="px-2 py-2 sm:px-3 text-right font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
               {items.map((t) => (
                 <tr key={t.transactionId} className="border-t border-border">
-                  <td className="whitespace-nowrap px-3 py-2 text-text-muted tabular-nums">{shortDate(t.date)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{usd(t.sale)}</td>
-                  <td className="px-3 py-2 text-right font-medium tabular-nums">{usd(t.commission)}</td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="whitespace-nowrap px-2 py-2 sm:px-3 text-text-muted tabular-nums">{shortDate(t.date)}</td>
+                  <td className="px-2 py-2 sm:px-3 text-right tabular-nums text-text-secondary">{usd(t.sale)}</td>
+                  <td className="px-2 py-2 sm:px-3 text-right font-medium tabular-nums">{usd(t.commission)}</td>
+                  <td className="px-2 py-2 sm:px-3 text-right">
                     <span className="inline-flex items-center justify-end gap-1">
                       <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: STATUS_COLOR[t.status] }} />
                       <span className="capitalize text-text-muted">{t.status}</span>
@@ -104,7 +104,7 @@ export function BrandTable({ rows, onSelectBrand, singleBrand }: Props) {
     const active = sort === key;
     return (
       <th
-        className={`cursor-pointer select-none whitespace-nowrap px-3 py-2 font-semibold ${alignRight ? "text-right" : "text-left"}`}
+        className={`cursor-pointer select-none whitespace-nowrap px-2 py-2 sm:px-3 font-semibold ${alignRight ? "text-right" : "text-left"}`}
         onClick={() => {
           if (active) setAsc(!asc);
           else {
@@ -192,10 +192,10 @@ function FragmentRow({
   return (
     <>
       <tr className="cursor-pointer border-t border-border hover:bg-surface-2" onClick={onToggle}>
-        <td className="whitespace-nowrap px-3 py-2 font-medium">
-          <span className="inline-flex items-center gap-1.5">
+        <td className="px-2 py-2 font-medium sm:px-3">
+          <span className="flex items-center gap-1.5">
             <span
-              className="text-[10px] text-text-muted transition-transform"
+              className="shrink-0 text-[10px] text-text-muted transition-transform"
               style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}
             >
               ▸
@@ -207,30 +207,30 @@ function FragmentRow({
                   e.stopPropagation();
                   onSelectBrand(r.advertiserId);
                 }}
-                className="inline-flex items-center gap-1 hover:underline"
+                className="block max-w-[120px] truncate text-left hover:underline sm:max-w-[220px]"
                 style={{ color: "var(--brand)" }}
-                title={`View ${r.advertiser} details`}
+                title={r.advertiser}
               >
                 {r.advertiser}
               </button>
             ) : (
-              r.advertiser
+              <span className="block max-w-[120px] truncate sm:max-w-[220px]">{r.advertiser}</span>
             )}
           </span>
         </td>
-        <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{num(r.count)}</td>
-        <td className="px-3 py-2 text-right tabular-nums">
+        <td className="px-2 py-2 sm:px-3 text-right tabular-nums text-text-secondary">{num(r.count)}</td>
+        <td className="px-2 py-2 sm:px-3 text-right tabular-nums">
           <div>{usd(r.sales)}</div>
           <div className="text-[11px] text-text-muted">{salesShare}</div>
         </td>
-        <td className="px-3 py-2 text-right font-medium tabular-nums">
+        <td className="px-2 py-2 sm:px-3 text-right font-medium tabular-nums">
           <div>{usd(r.commission)}</div>
           <div className="text-[11px] font-normal text-text-muted">{commShare}</div>
         </td>
       </tr>
       {isOpen && (
         <tr className="border-t border-border" style={{ background: "var(--surface-2)" }}>
-          <td colSpan={4} className="px-3 py-2.5">
+          <td colSpan={4} className="px-2 py-2 sm:px-3.5">
             <div className="pl-5">
               <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
                 <Dot color="var(--good)" label="Approved" value={r.approvedComm} />

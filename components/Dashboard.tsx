@@ -300,30 +300,41 @@ export function Dashboard() {
           {/* Brand detail: profile card (with its own back button), on a brand page */}
           {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
 
-          {/* KPIs — 3 across on every screen, compact on mobile */}
-          <div className="grid grid-cols-[1.25fr_1.25fr_1fr] gap-2 sm:grid-cols-3 sm:gap-3">
-            <KpiCard
-              label="Total Sales"
-              value={usd(view.cur.sales)}
-              current={view.cur.sales}
-              previous={view.prevTotals?.sales ?? null}
-              comparisonLabel={view.comparisonLabel}
-            />
-            <KpiCard
-              label="Total Commission"
-              value={usd(view.cur.commission)}
-              current={view.cur.commission}
-              previous={view.prevTotals?.commission ?? null}
-              comparisonLabel={view.comparisonLabel}
-            />
-            <KpiCard
-              label="# of Sales"
-              value={num(view.cur.count)}
-              current={view.cur.count}
-              previous={view.prevTotals?.count ?? null}
-              comparisonLabel={view.comparisonLabel}
-            />
-          </div>
+          {/* KPIs — 3 across on every screen, compact on mobile. All three share
+              one font size, picked to fit the longest value (so they always match). */}
+          {(() => {
+            const vals = [usd(view.cur.sales), usd(view.cur.commission), num(view.cur.count)];
+            const d = Math.max(...vals.map((v) => v.replace(/[^0-9]/g, "").length));
+            const kpiSize = d >= 9 ? "text-sm sm:text-2xl" : d >= 7 ? "text-base sm:text-3xl" : "text-lg sm:text-3xl";
+            return (
+              <div className="grid grid-cols-[1.25fr_1.25fr_1fr] gap-2 sm:grid-cols-3 sm:gap-3">
+                <KpiCard
+                  label="Total Sales"
+                  value={vals[0]}
+                  current={view.cur.sales}
+                  previous={view.prevTotals?.sales ?? null}
+                  comparisonLabel={view.comparisonLabel}
+                  valueSize={kpiSize}
+                />
+                <KpiCard
+                  label="Total Commission"
+                  value={vals[1]}
+                  current={view.cur.commission}
+                  previous={view.prevTotals?.commission ?? null}
+                  comparisonLabel={view.comparisonLabel}
+                  valueSize={kpiSize}
+                />
+                <KpiCard
+                  label="# of Sales"
+                  value={vals[2]}
+                  current={view.cur.count}
+                  previous={view.prevTotals?.count ?? null}
+                  comparisonLabel={view.comparisonLabel}
+                  valueSize={kpiSize}
+                />
+              </div>
+            );
+          })()}
 
           {/* On-pace projection + commission status breakdown */}
           <div className="rounded-xl border border-border bg-surface p-4">
