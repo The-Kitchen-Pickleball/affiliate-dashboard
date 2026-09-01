@@ -1,12 +1,10 @@
 import { google } from "googleapis";
 import type { Row, Status, HealthCheck } from "./types";
+import { BRAND_PROFILES } from "./brandProfiles";
 
 /**
  * Reads the shared commissions Google Sheet server-side via the affiliate
- * service account. Supports two credential sources:
- *   - GOOGLE_CREDENTIALS_JSON  (inline JSON — used on Vercel)
- *   - GOOGLE_APPLICATION_CREDENTIALS  (a file path — used locally)
- * The scrapers own this sheet; the dashboard only ever READS it.
+ * service account. The scrapers own this sheet; the dashboard only ever READS it.
  */
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID!;
@@ -18,9 +16,7 @@ const AUDIT_TAB = "Audit Aggregates"; // per-brand platform totals (SocialSnowba
 function getAuth() {
   const scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
   const inline = process.env.GOOGLE_CREDENTIALS_JSON;
-  if (inline) {
-    return new google.auth.GoogleAuth({ credentials: JSON.parse(inline), scopes });
-  }
+  if (inline) return new google.auth.GoogleAuth({ credentials: JSON.parse(inline), scopes });
   return new google.auth.GoogleAuth({ scopes });
 }
 
@@ -45,6 +41,10 @@ function nowCentral(): string {
   const g = (t: string) => p.find((x) => x.type === t)!.value;
   const hh = g("hour") === "24" ? "00" : g("hour");
   return `${g("year")}-${g("month")}-${g("day")} ${hh}:${g("minute")}:${g("second")}`;
+}
+
+function addDays(d: string, n: number): string {
+  return new Date(Date.parse(d + "T00:00:00Z") + n * 86_400_000).toISOString().slice(0, 10);
 }
 
 const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -73,9 +73,15 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const iOrders = idx("order_ref");
 
   const today = nowCentral().slice(0, 10);
+  const recentStart = addDays(today, -2); // last 3 calendar days
+  const priorStart = addDays(today, -30);
+  const priorEnd = addDays(today, -3);
+
   const rows: Row[] = [];
   const brandComm: Record<string, number> = {};
-  // Anomaly tallies for the data-integrity check.
+  const brandOrders: Record<string, number> = {};
+  const brandRecent: Record<string, number> = {}; // sales in the last 3 days
+  const brandPriorDays: Record<string, Set<string>> = {}; // distinct active days, days 3–30 ago
   const seenTx = new Set<string>();
   let futureDated = 0;
   let badTimestamp = 0;
@@ -91,8 +97,11 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     const orders = advertiserId === "rpm-pickleball" && ocRaw !== "" && Number.isFinite(oc) ? oc : 1;
     const commission = toDollars(r[iComm]);
     brandComm[advertiserId] = (brandComm[advertiserId] || 0) + commission;
+    brandOrders[advertiserId] = (brandOrders[advertiserId] || 0) + orders;
 
     const date = datetime.slice(0, 10);
+    if (date >= recentStart && date <= today) brandRecent[advertiserId] = (brandRecent[advertiserId] || 0) + 1;
+    if (date >= priorStart && date <= priorEnd) (brandPriorDays[advertiserId] ??= new Set()).add(date);
     if (date > today) futureDated++;
     if (!/^\d{4}-\d{2}-\d{2} ([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(datetime)) badTimestamp++;
     const tx = String(r[iTx] ?? "");
@@ -117,23 +126,21 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const lastScrape = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
-  const checks = computeChecks({ lastScrape, brandComm, rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds });
+  const checks = computeChecks({
+    lastScrape, brandComm, brandOrders, brandRecent, brandPriorDays,
+    rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
+  });
 
   return { rows, lastScrape, checks };
 }
 
 /** The morning health check — the same things I verify by hand, on demand. */
-function computeChecks({
-  lastScrape,
-  brandComm,
-  rpmTrack,
-  auditVals,
-  futureDated,
-  badTimestamp,
-  duplicateIds,
-}: {
+function computeChecks(o: {
   lastScrape: string | null;
   brandComm: Record<string, number>;
+  brandOrders: Record<string, number>;
+  brandRecent: Record<string, number>;
+  brandPriorDays: Record<string, Set<string>>;
   rpmTrack: string[][];
   auditVals: string[][];
   futureDated: number;
@@ -145,35 +152,45 @@ function computeChecks({
   const PCT_TOL = 0.05;
 
   // 1. Scraper freshness.
-  if (lastScrape) {
+  if (o.lastScrape) {
     const now = nowCentral();
-    const hoursSince = (Date.parse(now.replace(" ", "T")) - Date.parse(lastScrape.replace(" ", "T"))) / 3_600_000;
+    const hoursSince = (Date.parse(now.replace(" ", "T")) - Date.parse(o.lastScrape.replace(" ", "T"))) / 3_600_000;
     const centralHour = Number(now.slice(11, 13));
     const stale = Number.isFinite(hoursSince) && hoursSince > 4 && centralHour >= 7 && centralHour < 23;
     checks.push({
       label: "Scraper is running",
       status: stale ? "error" : "ok",
       detail: stale
-        ? `No update in ${hoursSince.toFixed(1)}h — the scraper may be down. Last update ${lastScrape}.`
-        : `Last update ${lastScrape}${Number.isFinite(hoursSince) ? ` (${hoursSince.toFixed(1)}h ago)` : ""}.`,
+        ? `No update in ${hoursSince.toFixed(1)}h — the scraper may be down. Last update ${o.lastScrape}.`
+        : `Last update ${o.lastScrape}${Number.isFinite(hoursSince) ? ` (${hoursSince.toFixed(1)}h ago)` : ""}.`,
     });
   } else {
     checks.push({ label: "Scraper is running", status: "warn", detail: "No heartbeat found." });
   }
 
-  // 2. RPM vs platform.
-  if (rpmTrack.length > 1) {
-    const platform = parseFloat(rpmTrack[rpmTrack.length - 1][2]);
-    const sheet = brandComm["rpm-pickleball"] || 0;
-    if (Number.isFinite(platform) && platform > 0) {
-      const diff = sheet - platform;
-      const off = Math.abs(diff) > DOLLAR_TOL;
+  // 2. RPM — verify BOTH the dollars AND the order count against the platform.
+  if (o.rpmTrack.length > 1) {
+    const last = o.rpmTrack[o.rpmTrack.length - 1];
+    const platformUsd = parseFloat(last[2]);
+    const platformOrders = parseInt(last[1], 10);
+    const sheetUsd = o.brandComm["rpm-pickleball"] || 0;
+    const sheetOrders = o.brandOrders["rpm-pickleball"] || 0;
+    if (Number.isFinite(platformUsd) && platformUsd > 0) {
+      const dUsd = sheetUsd - platformUsd;
+      const dOrders = sheetOrders - platformOrders;
+      // Dollars are the source of truth (exact). RPM's order count is approximate
+      // for reconstructed historical rows, so a small gap is expected — only a big
+      // one is worth a soft flag.
+      const offUsd = Math.abs(dUsd) > DOLLAR_TOL;
+      const offOrders = Number.isFinite(platformOrders) && Math.abs(dOrders) > 15;
       checks.push({
         label: "RPM matches the platform",
-        status: off ? "error" : "ok",
-        detail: off
-          ? `Off by ${usd(Math.abs(diff))} — sheet ${usd(sheet)} vs platform ${usd(platform)}.`
-          : `Exact — ${usd(sheet)} = platform ${usd(platform)}.`,
+        status: offUsd ? "error" : offOrders ? "warn" : "ok",
+        detail: offUsd
+          ? `Off by ${usd(Math.abs(dUsd))} — sheet ${usd(sheetUsd)} vs platform ${usd(platformUsd)}.`
+          : offOrders
+            ? `Dollars match (${usd(sheetUsd)}), but order count is off by ${dOrders} (sheet ${sheetOrders} vs platform ${platformOrders}).`
+            : `Matches the platform exactly — ${usd(sheetUsd)}. Orders: ${sheetOrders.toLocaleString()} (platform ${platformOrders.toLocaleString()}).`,
       });
     }
   }
@@ -181,30 +198,58 @@ function computeChecks({
   // 3. Other brands with platform-truth (Audit Aggregates → SocialSnowball etc.).
   const offBrands: string[] = [];
   let brandsChecked = 0;
-  for (let i = 1; i < auditVals.length; i++) {
-    const advertiserId = String(auditVals[i][0] ?? "").toLowerCase();
-    const platformTotal = parseFloat(auditVals[i][4]);
+  for (let i = 1; i < o.auditVals.length; i++) {
+    const advertiserId = String(o.auditVals[i][0] ?? "").toLowerCase();
+    const platformTotal = parseFloat(o.auditVals[i][4]);
     if (!advertiserId || !Number.isFinite(platformTotal) || platformTotal <= 0) continue;
     brandsChecked++;
-    const sheet = brandComm[advertiserId] || 0;
+    const sheet = o.brandComm[advertiserId] || 0;
     const diff = sheet - platformTotal;
     if (Math.abs(diff) > DOLLAR_TOL && Math.abs(diff) / platformTotal > PCT_TOL) {
       offBrands.push(`${advertiserId} off by ${usd(Math.abs(diff))} (sheet ${usd(sheet)} vs ${usd(platformTotal)})`);
     }
   }
+  const totalBrands = Object.keys(o.brandComm).filter(Boolean).length;
   if (brandsChecked > 0) {
     checks.push({
       label: "Brands match their platforms",
       status: offBrands.length ? "warn" : "ok",
-      detail: offBrands.length ? offBrands.join("; ") : `All ${brandsChecked} verifiable brand(s) within tolerance.`,
+      detail: offBrands.length
+        ? offBrands.join("; ")
+        : `${brandsChecked} brand${brandsChecked > 1 ? "s" : ""} checked against platform totals; ${Math.max(0, totalBrands - brandsChecked)} others mirror their platform automatically.`,
     });
   }
 
-  // 4. Data integrity.
+  // 4. Went-quiet watch — a brand that was regularly active (≥12 active days in the
+  //    prior month) but has had zero sales in the last 3 days. Catches a silently
+  //    broken scraper for the self-mirroring brands nothing else can verify.
+  const quiet: string[] = [];
+  for (const [adv, days] of Object.entries(o.brandPriorDays)) {
+    if (days.size >= 12 && (o.brandRecent[adv] || 0) === 0) quiet.push(adv);
+  }
+  checks.push({
+    label: "Active brands still reporting",
+    status: quiet.length ? "warn" : "ok",
+    detail: quiet.length
+      ? `No sales in 3+ days from usually-active brand(s): ${quiet.join(", ")} — check their scrapers.`
+      : "Every regularly-active brand has recent sales.",
+  });
+
+  // 5. Integrations that need manual attention (from the Notion connection status).
+  const manual = Object.entries(BRAND_PROFILES)
+    .filter(([, p]) => p.connected === "Disconnected" || p.connected === "Manual Process")
+    .map(([id]) => id);
+  checks.push({
+    label: "Integrations connected",
+    status: manual.length ? "warn" : "ok",
+    detail: manual.length ? `Needs manual attention: ${manual.join(", ")}.` : "All integrations connected.",
+  });
+
+  // 6. Data integrity.
   const problems: string[] = [];
-  if (futureDated > 0) problems.push(`${futureDated} future-dated row(s)`);
-  if (badTimestamp > 0) problems.push(`${badTimestamp} malformed timestamp(s)`);
-  if (duplicateIds > 0) problems.push(`${duplicateIds} duplicate transaction id(s)`);
+  if (o.futureDated > 0) problems.push(`${o.futureDated} future-dated row(s)`);
+  if (o.badTimestamp > 0) problems.push(`${o.badTimestamp} malformed timestamp(s)`);
+  if (o.duplicateIds > 0) problems.push(`${o.duplicateIds} duplicate transaction id(s)`);
   checks.push({
     label: "No data anomalies",
     status: problems.length ? "error" : "ok",
