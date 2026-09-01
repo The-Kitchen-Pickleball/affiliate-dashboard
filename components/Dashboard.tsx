@@ -56,6 +56,25 @@ export function Dashboard() {
   const [customEnd, setCustomEnd] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showHealth, setShowHealth] = useState(false);
+  // Dismissed health warnings (per-browser, remembered). Errors can't be dismissed.
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("dashHealthDismissed");
+      if (raw) setDismissed(new Set(JSON.parse(raw)));
+    } catch {}
+  }, []);
+  const toggleDismiss = useCallback((id: string, on: boolean) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      try {
+        localStorage.setItem("dashHealthDismissed", JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }, []);
   // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
   const [brand, setBrand] = useState<string | null>(null);
 
@@ -260,7 +279,7 @@ export function Dashboard() {
           )}
           {data &&
             (() => {
-              const problems = data.checks.filter((c) => c.status !== "ok");
+              const problems = data.checks.filter((c) => c.status !== "ok" && !(c.dismissId && dismissed.has(c.dismissId)));
               const err = problems.some((c) => c.status === "error");
               const color = problems.length === 0 ? "var(--good)" : err ? "var(--bad)" : "#eab308";
               const label =
@@ -296,11 +315,14 @@ export function Dashboard() {
       </header>
 
       {/* Live health alerts — surfaced here since Slack isn't reliable */}
-      {data && data.checks.some((c) => c.status !== "ok") && (
-        <div className="mb-5">
-          <HealthBanner checks={data.checks} onOpen={() => setShowHealth(true)} />
-        </div>
-      )}
+      {(() => {
+        const problems = data ? data.checks.filter((c) => c.status !== "ok" && !(c.dismissId && dismissed.has(c.dismissId))) : [];
+        return problems.length > 0 ? (
+          <div className="mb-5">
+            <HealthBanner problems={problems} onOpen={() => setShowHealth(true)} />
+          </div>
+        ) : null;
+      })()}
 
       {/* Filters */}
       <div className="mb-5">
@@ -415,7 +437,13 @@ export function Dashboard() {
       )}
 
       {showHealth && data && (
-        <HealthReportModal checks={data.checks} lastScrape={data.lastScrape} onClose={() => setShowHealth(false)} />
+        <HealthReportModal
+          checks={data.checks}
+          lastScrape={data.lastScrape}
+          dismissed={dismissed}
+          onToggleDismiss={toggleDismiss}
+          onClose={() => setShowHealth(false)}
+        />
       )}
     </div>
   );

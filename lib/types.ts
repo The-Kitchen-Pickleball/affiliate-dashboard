@@ -25,6 +25,10 @@ export interface HealthCheck {
   label: string;
   status: "ok" | "warn" | "error";
   detail: string;
+  /** Stable signature for a dismissible warning. Present only on warn-level checks;
+   *  errors can never be dismissed. Changes if the underlying entities change, so a
+   *  dismissed alert reappears when it's actually a new problem. */
+  dismissId?: string;
 }
 
 export interface ApiResponse {

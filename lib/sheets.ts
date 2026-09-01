@@ -73,9 +73,9 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const iOrders = idx("order_ref");
 
   const today = nowCentral().slice(0, 10);
-  const recentStart = addDays(today, -2); // last 3 calendar days
+  const recentStart = addDays(today, -4); // last 5 days (so a long weekend doesn't trip it)
   const priorStart = addDays(today, -30);
-  const priorEnd = addDays(today, -3);
+  const priorEnd = addDays(today, -5);
 
   const rows: Row[] = [];
   const brandComm: Record<string, number> = {};
@@ -190,13 +190,14 @@ function computeChecks(o: {
           ? `Off by ${usd(Math.abs(dUsd))} — sheet ${usd(sheetUsd)} vs platform ${usd(platformUsd)}.`
           : offOrders
             ? `Dollars match (${usd(sheetUsd)}), but order count is off by ${dOrders} (sheet ${sheetOrders} vs platform ${platformOrders}).`
-            : `Matches the platform exactly — ${usd(sheetUsd)}. Orders: ${sheetOrders.toLocaleString()} (platform ${platformOrders.toLocaleString()}).`,
+            : `${usd(sheetUsd)} — matches the platform exactly. (Order count ~${sheetOrders.toLocaleString()} vs ${platformOrders.toLocaleString()}; RPM's per-order counts are estimated, so a few off is normal.)`,
       });
     }
   }
 
   // 3. Other brands with platform-truth (Audit Aggregates → SocialSnowball etc.).
   const offBrands: string[] = [];
+  const offBrandIds: string[] = [];
   let brandsChecked = 0;
   for (let i = 1; i < o.auditVals.length; i++) {
     const advertiserId = String(o.auditVals[i][0] ?? "").toLowerCase();
@@ -207,6 +208,7 @@ function computeChecks(o: {
     const diff = sheet - platformTotal;
     if (Math.abs(diff) > DOLLAR_TOL && Math.abs(diff) / platformTotal > PCT_TOL) {
       offBrands.push(`${advertiserId} off by ${usd(Math.abs(diff))} (sheet ${usd(sheet)} vs ${usd(platformTotal)})`);
+      offBrandIds.push(advertiserId);
     }
   }
   const totalBrands = Object.keys(o.brandComm).filter(Boolean).length;
@@ -214,6 +216,7 @@ function computeChecks(o: {
     checks.push({
       label: "Brands match their platforms",
       status: offBrands.length ? "warn" : "ok",
+      dismissId: offBrands.length ? `brands:${[...offBrandIds].sort().join(",")}` : undefined,
       detail: offBrands.length
         ? offBrands.join("; ")
         : `${brandsChecked} brand${brandsChecked > 1 ? "s" : ""} checked against platform totals; ${Math.max(0, totalBrands - brandsChecked)} others mirror their platform automatically.`,
@@ -230,8 +233,9 @@ function computeChecks(o: {
   checks.push({
     label: "Active brands still reporting",
     status: quiet.length ? "warn" : "ok",
+    dismissId: quiet.length ? `quiet:${[...quiet].sort().join(",")}` : undefined,
     detail: quiet.length
-      ? `No sales in 3+ days from usually-active brand(s): ${quiet.join(", ")} — check their scrapers.`
+      ? `No sales in 5+ days from usually-active brand(s): ${quiet.join(", ")}. Could be a slow stretch — I'll keep watching it.`
       : "Every regularly-active brand has recent sales.",
   });
 
@@ -242,6 +246,7 @@ function computeChecks(o: {
   checks.push({
     label: "Integrations connected",
     status: manual.length ? "warn" : "ok",
+    dismissId: manual.length ? `integrations:${[...manual].sort().join(",")}` : undefined,
     detail: manual.length ? `Needs manual attention: ${manual.join(", ")}.` : "All integrations connected.",
   });
 

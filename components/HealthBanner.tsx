@@ -1,9 +1,9 @@
 import type { HealthCheck } from "@/lib/types";
 
 /** A prominent banner at the top of the dashboard when a health check fails.
- *  Clicking it opens the full report. Shows nothing when all checks pass. */
-export function HealthBanner({ checks, onOpen }: { checks: HealthCheck[]; onOpen: () => void }) {
-  const problems = checks.filter((c) => c.status !== "ok");
+ *  Clicking it opens the full report. `problems` is the already-filtered list of
+ *  active (non-dismissed) non-ok checks. */
+export function HealthBanner({ problems, onOpen }: { problems: HealthCheck[]; onOpen: () => void }) {
   if (problems.length === 0) return null;
   const hasError = problems.some((c) => c.status === "error");
   const accent = hasError ? "var(--bad)" : "#eab308";
