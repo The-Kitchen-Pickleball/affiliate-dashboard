@@ -26,6 +26,7 @@ import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { BrandProfile } from "./BrandProfile";
 import { HealthBanner } from "./HealthBanner";
+import { HealthReportModal } from "./HealthReportModal";
 import { AveragesSection } from "./AveragesSection";
 
 const COMPARISON_LABEL: Record<RangePreset, string> = {
@@ -54,6 +55,7 @@ export function Dashboard() {
   const [customStart, setCustomStart] = useState<string | null>(null);
   const [customEnd, setCustomEnd] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showHealth, setShowHealth] = useState(false);
   // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
   const [brand, setBrand] = useState<string | null>(null);
 
@@ -256,9 +258,26 @@ export function Dashboard() {
               <span className="hidden sm:inline">Updated {heartbeatLabel(data.lastScrape)}</span>
             </p>
           )}
-          {data && data.health.length === 0 && (
-            <p className="text-[11px] font-medium" style={{ color: "var(--good)" }}>✓ All systems healthy</p>
-          )}
+          {data &&
+            (() => {
+              const problems = data.checks.filter((c) => c.status !== "ok");
+              const err = problems.some((c) => c.status === "error");
+              const color = problems.length === 0 ? "var(--good)" : err ? "var(--bad)" : "#eab308";
+              const label =
+                problems.length === 0
+                  ? "✓ All systems healthy"
+                  : `${err ? "🚨" : "⚠"} ${problems.length} thing${problems.length > 1 ? "s" : ""} to review`;
+              return (
+                <button
+                  onClick={() => setShowHealth(true)}
+                  className="text-[11px] font-medium underline decoration-dotted underline-offset-2 hover:opacity-80"
+                  style={{ color }}
+                  title="View health report"
+                >
+                  {label}
+                </button>
+              );
+            })()}
         </div>
         <div className="flex items-center gap-2 justify-self-end">
           <button
@@ -277,9 +296,9 @@ export function Dashboard() {
       </header>
 
       {/* Live health alerts — surfaced here since Slack isn't reliable */}
-      {data?.health && data.health.length > 0 && (
+      {data && data.checks.some((c) => c.status !== "ok") && (
         <div className="mb-5">
-          <HealthBanner issues={data.health} />
+          <HealthBanner checks={data.checks} onOpen={() => setShowHealth(true)} />
         </div>
       )}
 
@@ -393,6 +412,10 @@ export function Dashboard() {
           {/* Averages — below the trend (per Dane), always expanded */}
           <AveragesSection avg={view.avg} dow={view.dow} periodLabel={view.periodLabel} />
         </div>
+      )}
+
+      {showHealth && data && (
+        <HealthReportModal checks={data.checks} lastScrape={data.lastScrape} onClose={() => setShowHealth(false)} />
       )}
     </div>
   );

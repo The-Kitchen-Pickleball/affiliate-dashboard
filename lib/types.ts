@@ -19,18 +19,20 @@ export interface Row {
   orders: number;
 }
 
-/** A live data-health problem surfaced as a banner on the dashboard. */
-export interface HealthIssue {
-  severity: "error" | "warn";
-  message: string;
+/** One line of the health report (scraper freshness, RPM vs platform, brand drift,
+ *  data anomalies). Rendered in the health modal; non-ok ones also drive the banner. */
+export interface HealthCheck {
+  label: string;
+  status: "ok" | "warn" | "error";
+  detail: string;
 }
 
 export interface ApiResponse {
   rows: Row[];
   /** When the underlying sheet was last successfully scraped (Status tab). */
   lastScrape: string | null;
-  /** Live health checks (RPM vs platform, per-brand drift, stale scraper). */
-  health: HealthIssue[];
+  /** Live health checks run on every load (shown in the health modal + banner). */
+  checks: HealthCheck[];
   /** When this API response was generated (ISO). */
   fetchedAt: string;
 }

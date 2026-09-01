@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import type { Row, Status, HealthIssue } from "./types";
+import type { Row, Status, HealthCheck } from "./types";
 
 /**
  * Reads the shared commissions Google Sheet server-side via the affiliate
@@ -19,12 +19,8 @@ function getAuth() {
   const scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
   const inline = process.env.GOOGLE_CREDENTIALS_JSON;
   if (inline) {
-    return new google.auth.GoogleAuth({
-      credentials: JSON.parse(inline),
-      scopes,
-    });
+    return new google.auth.GoogleAuth({ credentials: JSON.parse(inline), scopes });
   }
-  // Falls back to GOOGLE_APPLICATION_CREDENTIALS (a key-file path).
   return new google.auth.GoogleAuth({ scopes });
 }
 
@@ -53,7 +49,7 @@ function nowCentral(): string {
 
 const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | null; health: HealthIssue[] }> {
+export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | null; checks: HealthCheck[] }> {
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as never });
 
@@ -74,12 +70,17 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const iSale = idx("sale_amount");
   const iComm = idx("commission_amount");
   const iStatus = idx("status");
-  // RPM stores its real bundled order count in order_ref (see rpm/src/sheets.js).
   const iOrders = idx("order_ref");
 
+  const today = nowCentral().slice(0, 10);
   const rows: Row[] = [];
-  // Per-brand commission sums (dollars) for the health checks below.
   const brandComm: Record<string, number> = {};
+  // Anomaly tallies for the data-integrity check.
+  const seenTx = new Set<string>();
+  let futureDated = 0;
+  let badTimestamp = 0;
+  let duplicateIds = 0;
+
   for (let i = 1; i < values.length; i++) {
     const r = values[i];
     const datetime = String(r[iDate] ?? "");
@@ -90,11 +91,21 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     const orders = advertiserId === "rpm-pickleball" && ocRaw !== "" && Number.isFinite(oc) ? oc : 1;
     const commission = toDollars(r[iComm]);
     brandComm[advertiserId] = (brandComm[advertiserId] || 0) + commission;
+
+    const date = datetime.slice(0, 10);
+    if (date > today) futureDated++;
+    if (!/^\d{4}-\d{2}-\d{2} ([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(datetime)) badTimestamp++;
+    const tx = String(r[iTx] ?? "");
+    if (tx) {
+      if (seenTx.has(tx)) duplicateIds++;
+      else seenTx.add(tx);
+    }
+
     rows.push({
-      transactionId: String(r[iTx] ?? ""),
+      transactionId: tx,
       advertiserId,
       advertiser: String(r[iAdv] ?? r[iAdvId] ?? "Unknown"),
-      date: datetime.slice(0, 10),
+      date,
       datetime,
       sale: toDollars(r[iSale]),
       commission,
@@ -103,77 +114,102 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     });
   }
 
-  const lastScrape = statusRes?.data.values?.[0]?.[0] ?? null;
+  const lastScrape = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
-  const health = computeHealth({ lastScrape: lastScrape ? String(lastScrape) : null, brandComm, rpmTrack, auditVals });
+  const checks = computeChecks({ lastScrape, brandComm, rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds });
 
-  return { rows, lastScrape: lastScrape ? String(lastScrape) : null, health };
+  return { rows, lastScrape, checks };
 }
 
-/** Live health checks surfaced on the dashboard (so we don't rely on Slack). */
-function computeHealth({
+/** The morning health check — the same things I verify by hand, on demand. */
+function computeChecks({
   lastScrape,
   brandComm,
   rpmTrack,
   auditVals,
+  futureDated,
+  badTimestamp,
+  duplicateIds,
 }: {
   lastScrape: string | null;
   brandComm: Record<string, number>;
   rpmTrack: string[][];
   auditVals: string[][];
-}): HealthIssue[] {
-  const issues: HealthIssue[] = [];
+  futureDated: number;
+  badTimestamp: number;
+  duplicateIds: number;
+}): HealthCheck[] {
+  const checks: HealthCheck[] = [];
   const DOLLAR_TOL = 50;
   const PCT_TOL = 0.05;
 
-  // 1. Scraper freshness — only during active hours (7am–11pm Central), so the
-  //    normal overnight gap between scrapes doesn't cry wolf.
+  // 1. Scraper freshness.
   if (lastScrape) {
     const now = nowCentral();
     const hoursSince = (Date.parse(now.replace(" ", "T")) - Date.parse(lastScrape.replace(" ", "T"))) / 3_600_000;
     const centralHour = Number(now.slice(11, 13));
-    if (Number.isFinite(hoursSince) && hoursSince > 4 && centralHour >= 7 && centralHour < 23) {
-      issues.push({
-        severity: "error",
-        message: `Data hasn't updated in ${hoursSince.toFixed(1)} hours — the scraper may be down. Last update ${lastScrape}.`,
-      });
-    }
+    const stale = Number.isFinite(hoursSince) && hoursSince > 4 && centralHour >= 7 && centralHour < 23;
+    checks.push({
+      label: "Scraper is running",
+      status: stale ? "error" : "ok",
+      detail: stale
+        ? `No update in ${hoursSince.toFixed(1)}h — the scraper may be down. Last update ${lastScrape}.`
+        : `Last update ${lastScrape}${Number.isFinite(hoursSince) ? ` (${hoursSince.toFixed(1)}h ago)` : ""}.`,
+    });
+  } else {
+    checks.push({ label: "Scraper is running", status: "warn", detail: "No heartbeat found." });
   }
 
-  // 2. RPM vs platform. RPM's sheet total must equal the platform's cumulative
-  //    (latest "RPM Commissions" row). This is the check that has caught every
-  //    RPM incident.
+  // 2. RPM vs platform.
   if (rpmTrack.length > 1) {
     const platform = parseFloat(rpmTrack[rpmTrack.length - 1][2]);
     const sheet = brandComm["rpm-pickleball"] || 0;
     if (Number.isFinite(platform) && platform > 0) {
       const diff = sheet - platform;
-      if (Math.abs(diff) > DOLLAR_TOL) {
-        issues.push({
-          severity: "error",
-          message: `RPM is ${diff > 0 ? "over" : "under"} the platform by ${usd(Math.abs(diff))} (sheet ${usd(sheet)} vs platform ${usd(platform)}).`,
-        });
-      }
-    }
-  }
-
-  // 3. Any other brand with platform-truth in Audit Aggregates (SocialSnowball,
-  //    and any platform we extend it to). Off by >$50 AND >5% → flag.
-  for (let i = 1; i < auditVals.length; i++) {
-    const advertiserId = String(auditVals[i][0] ?? "").toLowerCase();
-    const platformLabel = String(auditVals[i][1] ?? "platform");
-    const platformTotal = parseFloat(auditVals[i][4]);
-    if (!advertiserId || !Number.isFinite(platformTotal) || platformTotal <= 0) continue;
-    const sheet = brandComm[advertiserId] || 0;
-    const diff = sheet - platformTotal;
-    if (Math.abs(diff) > DOLLAR_TOL && Math.abs(diff) / platformTotal > PCT_TOL) {
-      issues.push({
-        severity: "warn",
-        message: `${advertiserId} is ${diff > 0 ? "over" : "under"} ${platformLabel} by ${usd(Math.abs(diff))} (sheet ${usd(sheet)} vs platform ${usd(platformTotal)}).`,
+      const off = Math.abs(diff) > DOLLAR_TOL;
+      checks.push({
+        label: "RPM matches the platform",
+        status: off ? "error" : "ok",
+        detail: off
+          ? `Off by ${usd(Math.abs(diff))} — sheet ${usd(sheet)} vs platform ${usd(platform)}.`
+          : `Exact — ${usd(sheet)} = platform ${usd(platform)}.`,
       });
     }
   }
 
-  return issues;
+  // 3. Other brands with platform-truth (Audit Aggregates → SocialSnowball etc.).
+  const offBrands: string[] = [];
+  let brandsChecked = 0;
+  for (let i = 1; i < auditVals.length; i++) {
+    const advertiserId = String(auditVals[i][0] ?? "").toLowerCase();
+    const platformTotal = parseFloat(auditVals[i][4]);
+    if (!advertiserId || !Number.isFinite(platformTotal) || platformTotal <= 0) continue;
+    brandsChecked++;
+    const sheet = brandComm[advertiserId] || 0;
+    const diff = sheet - platformTotal;
+    if (Math.abs(diff) > DOLLAR_TOL && Math.abs(diff) / platformTotal > PCT_TOL) {
+      offBrands.push(`${advertiserId} off by ${usd(Math.abs(diff))} (sheet ${usd(sheet)} vs ${usd(platformTotal)})`);
+    }
+  }
+  if (brandsChecked > 0) {
+    checks.push({
+      label: "Brands match their platforms",
+      status: offBrands.length ? "warn" : "ok",
+      detail: offBrands.length ? offBrands.join("; ") : `All ${brandsChecked} verifiable brand(s) within tolerance.`,
+    });
+  }
+
+  // 4. Data integrity.
+  const problems: string[] = [];
+  if (futureDated > 0) problems.push(`${futureDated} future-dated row(s)`);
+  if (badTimestamp > 0) problems.push(`${badTimestamp} malformed timestamp(s)`);
+  if (duplicateIds > 0) problems.push(`${duplicateIds} duplicate transaction id(s)`);
+  checks.push({
+    label: "No data anomalies",
+    status: problems.length ? "error" : "ok",
+    detail: problems.length ? problems.join("; ") : "No future dates, bad timestamps, or duplicate IDs.",
+  });
+
+  return checks;
 }
