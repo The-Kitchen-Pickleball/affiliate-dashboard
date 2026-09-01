@@ -19,10 +19,18 @@ export interface Row {
   orders: number;
 }
 
+/** A live data-health problem surfaced as a banner on the dashboard. */
+export interface HealthIssue {
+  severity: "error" | "warn";
+  message: string;
+}
+
 export interface ApiResponse {
   rows: Row[];
   /** When the underlying sheet was last successfully scraped (Status tab). */
   lastScrape: string | null;
+  /** Live health checks (RPM vs platform, per-brand drift, stale scraper). */
+  health: HealthIssue[];
   /** When this API response was generated (ISO). */
   fetchedAt: string;
 }

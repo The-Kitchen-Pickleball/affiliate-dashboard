@@ -9,10 +9,11 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const { rows, lastScrape } = await fetchRows();
+    const { rows, lastScrape, health } = await fetchRows();
     const body: ApiResponse = {
       rows,
       lastScrape,
+      health,
       fetchedAt: new Date().toISOString(),
     };
     return NextResponse.json(body, { headers: { "Cache-Control": "no-store" } });
