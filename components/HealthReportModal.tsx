@@ -72,7 +72,7 @@ export function HealthReportModal({
         </div>
 
         <p className="mt-4 text-[11px] text-text-muted">
-          These checks run automatically every time the dashboard loads. Anything not dismissed also shows as a banner up top.
+          These checks run automatically every time the dashboard loads. When something needs attention the status line up top turns yellow or red.
         </p>
       </div>
     </div>

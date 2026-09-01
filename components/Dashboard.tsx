@@ -25,7 +25,6 @@ import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { BrandProfile } from "./BrandProfile";
-import { HealthBanner } from "./HealthBanner";
 import { HealthReportModal } from "./HealthReportModal";
 import { AveragesSection } from "./AveragesSection";
 
@@ -313,16 +312,6 @@ export function Dashboard() {
           <ThemeToggle />
         </div>
       </header>
-
-      {/* Live health alerts — surfaced here since Slack isn't reliable */}
-      {(() => {
-        const problems = data ? data.checks.filter((c) => c.status !== "ok" && !(c.dismissId && dismissed.has(c.dismissId))) : [];
-        return problems.length > 0 ? (
-          <div className="mb-5">
-            <HealthBanner problems={problems} onOpen={() => setShowHealth(true)} />
-          </div>
-        ) : null;
-      })()}
 
       {/* Filters */}
       <div className="mb-5">
