@@ -256,6 +256,9 @@ export function Dashboard() {
               <span className="hidden sm:inline">Updated {heartbeatLabel(data.lastScrape)}</span>
             </p>
           )}
+          {data && data.health.length === 0 && (
+            <p className="text-[11px] font-medium" style={{ color: "var(--good)" }}>✓ All systems healthy</p>
+          )}
         </div>
         <div className="flex items-center gap-2 justify-self-end">
           <button
