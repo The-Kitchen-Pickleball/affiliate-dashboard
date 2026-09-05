@@ -1,6 +1,5 @@
 import { google } from "googleapis";
 import type { Row, Status, HealthCheck } from "./types";
-import { BRAND_PROFILES } from "./brandProfiles";
 
 /**
  * Reads the shared commissions Google Sheet server-side via the affiliate
@@ -240,15 +239,9 @@ function computeChecks(o: {
   });
 
   // 5. Integrations that need manual attention (from the Notion connection status).
-  const manual = Object.entries(BRAND_PROFILES)
-    .filter(([, p]) => p.connected === "Disconnected" || p.connected === "Manual Process")
-    .map(([id]) => id);
-  checks.push({
-    label: "Integrations connected",
-    status: manual.length ? "warn" : "ok",
-    dismissId: manual.length ? `integrations:${[...manual].sort().join(",")}` : undefined,
-    detail: manual.length ? `Needs manual attention: ${manual.join(", ")}.` : "All integrations connected.",
-  });
+  // (The old "Integrations connected" check was removed — the only brands it ever
+  // flagged were Refersion ones, which log in via an emailed magic link and can
+  // never be automated, so it was permanent, un-actionable noise.)
 
   // 6. Data integrity.
   const problems: string[] = [];
