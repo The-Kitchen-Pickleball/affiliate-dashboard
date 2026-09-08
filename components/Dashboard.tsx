@@ -342,11 +342,11 @@ export function Dashboard() {
           {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
 
           {/* KPIs — 3 across on every screen, compact on mobile. All three share
-              one font size, picked to fit the longest value (so they always match). */}
+              one FIXED font size (the compact size big numbers use) so the cards
+              always match regardless of value length — Dane's preference. */}
           {(() => {
             const vals = [usd(view.cur.sales), usd(view.cur.commission), num(view.cur.count)];
-            const d = Math.max(...vals.map((v) => v.replace(/[^0-9]/g, "").length));
-            const kpiSize = d >= 9 ? "text-sm sm:text-2xl" : d >= 7 ? "text-base sm:text-3xl" : "text-lg sm:text-3xl";
+            const kpiSize = "text-sm sm:text-2xl";
             return (
               <div className="grid grid-cols-[1.25fr_1.25fr_1fr] gap-2 sm:grid-cols-3 sm:gap-3">
                 <KpiCard

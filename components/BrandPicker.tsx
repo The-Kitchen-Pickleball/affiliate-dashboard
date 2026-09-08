@@ -74,7 +74,7 @@ export function BrandPicker({ advertisers, selected, onChange, className = "" }:
           onClick={() => setOpen(false)}
         >
           <div
-            className="animate-sheet-up flex max-h-[80vh] w-full flex-col rounded-t-3xl border-t border-border bg-surface pb-6 pt-3 sm:max-w-sm sm:rounded-2xl sm:border sm:pb-4 sm:pt-4"
+            className="animate-sheet-up flex h-[80vh] w-full flex-col rounded-t-3xl border-t border-border bg-surface pb-6 pt-3 sm:h-auto sm:max-h-[80vh] sm:max-w-sm sm:rounded-2xl sm:border sm:pb-4 sm:pt-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full sm:hidden" style={{ background: "var(--border)" }} />
