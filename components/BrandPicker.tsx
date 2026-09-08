@@ -80,7 +80,7 @@ export function BrandPicker({ advertisers, selected, onChange, className = "" }:
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full sm:hidden" style={{ background: "var(--border)" }} />
 
             <div className="mb-3 flex items-center justify-between px-4">
-              <h3 className="text-base font-semibold">Brand</h3>
+              <h3 className="text-base font-semibold">Search brand</h3>
               <button onClick={() => setOpen(false)} className="rounded-md px-2 py-1 text-text-muted active:bg-surface-2" aria-label="Close">
                 ✕
               </button>

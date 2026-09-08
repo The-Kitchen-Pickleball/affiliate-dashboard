@@ -247,6 +247,18 @@ export function Dashboard() {
     }));
   }, [view, granularity, trendRange, metric]);
 
+  // Shared value font size for the KPI cards AND the Approved/Pending/Declined
+  // status numbers, so they always match. Sized to fit the longest KPI value:
+  // big totals shrink a step, shorter ones render larger. (Approved/Pending are
+  // ≤ the commission KPI in length, so the KPI-derived size always fits them.)
+  const kpiSize = view
+    ? (() => {
+        const vals = [usd(view.cur.sales), usd(view.cur.commission), num(view.cur.count)];
+        const d = Math.max(...vals.map((v) => v.replace(/[^0-9]/g, "").length));
+        return d >= 9 ? "text-sm sm:text-2xl" : d >= 7 ? "text-base sm:text-3xl" : "text-lg sm:text-3xl";
+      })()
+    : "text-lg sm:text-3xl";
+
   if (error) {
     return (
       <div className="mx-auto max-w-md p-8 text-center">
@@ -342,11 +354,10 @@ export function Dashboard() {
           {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
 
           {/* KPIs — 3 across on every screen, compact on mobile. All three share
-              one FIXED font size (the compact size big numbers use) so the cards
-              always match regardless of value length — Dane's preference. */}
+              one font size (kpiSize, hoisted above) picked to fit the longest
+              value, and the Approved/Pending numbers below use the same size. */}
           {(() => {
             const vals = [usd(view.cur.sales), usd(view.cur.commission), num(view.cur.count)];
-            const kpiSize = "text-sm sm:text-2xl";
             return (
               <div className="grid grid-cols-[1.25fr_1.25fr_1fr] gap-2 sm:grid-cols-3 sm:gap-3">
                 <KpiCard
@@ -391,10 +402,10 @@ export function Dashboard() {
               </div>
             )}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              <StatusStat label="Approved" value={view.statusTotals.approved.commission} color="var(--good)" />
-              <StatusStat label="Pending" value={view.statusTotals.pending.commission} color="var(--text-muted)" />
+              <StatusStat label="Approved" value={view.statusTotals.approved.commission} color="var(--good)" size={kpiSize} />
+              <StatusStat label="Pending" value={view.statusTotals.pending.commission} color="var(--text-muted)" size={kpiSize} />
               {view.statusTotals.declined.commission > 0 && (
-                <StatusStat label="Declined" value={view.statusTotals.declined.commission} color="var(--bad)" muted />
+                <StatusStat label="Declined" value={view.statusTotals.declined.commission} color="var(--bad)" size={kpiSize} muted />
               )}
             </div>
           </div>
@@ -442,17 +453,19 @@ function StatusStat({
   label,
   value,
   color,
+  size,
   muted,
 }: {
   label: string;
   value: number;
   color: string;
+  size: string; // shared KPI value font size so status numbers match the KPIs
   muted?: boolean;
 }) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
-      <span className={`font-semibold tabular-nums ${muted ? "text-text-muted" : ""}`}>{usd(value)}</span>
+      <span className={`font-semibold tabular-nums ${size} ${muted ? "text-text-muted" : ""}`}>{usd(value)}</span>
       <span className="text-text-muted">{label}</span>
     </span>
   );
