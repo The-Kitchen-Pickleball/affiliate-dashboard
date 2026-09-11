@@ -247,21 +247,10 @@ function computeChecks(o: {
     });
   }
 
-  // 4. Went-quiet watch — a brand that was regularly active (≥12 active days in the
-  //    prior month) but has had zero sales in the last 3 days. Catches a silently
-  //    broken scraper for the self-mirroring brands nothing else can verify.
-  const quiet: string[] = [];
-  for (const [adv, days] of Object.entries(o.brandPriorDays)) {
-    if (days.size >= 12 && (o.brandRecent[adv] || 0) === 0) quiet.push(adv);
-  }
-  checks.push({
-    label: "Active brands still reporting",
-    status: quiet.length ? "warn" : "ok",
-    dismissId: quiet.length ? `quiet:${[...quiet].sort().join(",")}` : undefined,
-    detail: quiet.length
-      ? `No sales in 5+ days from usually-active brand(s): ${quiet.join(", ")}. Could be a slow stretch — I'll keep watching it.`
-      : "Every regularly-active brand has recent sales.",
-  });
+  // 4. (Removed 2026-09-11 at Dane's request) The "went-quiet" watch flagged a
+  //    regularly-active brand with no recent sales. It produced noise for brands
+  //    just having a genuinely slow stretch, which Dane doesn't want alerts about.
+  //    Data integrity (dollars/counts vs platform, anomalies) is still fully checked.
 
   // 5. Integrations that need manual attention (from the Notion connection status).
   // (The old "Integrations connected" check was removed — the only brands it ever
