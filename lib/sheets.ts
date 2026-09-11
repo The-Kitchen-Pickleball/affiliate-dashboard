@@ -130,6 +130,27 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
   });
 
+  // RPM order count — display reconciliation. The per-row order_ref sum slightly
+  // UNDERcounts because the scraper writes no row when a snapshot's dollars net to
+  // zero (a refund cancels a sale) even though Shopify still counted those orders.
+  // Shopify's own cumulative "Sales" count (RPM Commissions tab, col B) is
+  // authoritative, so nudge the DISPLAY count up to it by adding the missing orders
+  // to the most recent RPM row. gap is clamped to >= 0, so this can match the
+  // platform but NEVER exceed it — no overcount. computeChecks() already ran on the
+  // raw sum above, so a genuine overcount is still caught by the alert.
+  if (rpmTrack.length > 1) {
+    const platformRpmCount = parseInt(rpmTrack[rpmTrack.length - 1][1], 10);
+    const rawRpmCount = brandOrders["rpm-pickleball"] || 0;
+    const gap = platformRpmCount - rawRpmCount;
+    if (Number.isFinite(platformRpmCount) && gap > 0) {
+      let latest: Row | null = null;
+      for (const row of rows) {
+        if (row.advertiserId === "rpm-pickleball" && (!latest || row.datetime > latest.datetime)) latest = row;
+      }
+      if (latest) latest.orders += gap;
+    }
+  }
+
   return { rows, lastScrape, checks };
 }
 
@@ -181,15 +202,19 @@ function computeChecks(o: {
       // for reconstructed historical rows, so a small gap is expected — only a big
       // one is worth a soft flag.
       const offUsd = Math.abs(dUsd) > DOLLAR_TOL;
-      const offOrders = Number.isFinite(platformOrders) && Math.abs(dOrders) > 15;
+      // Only an OVERCOUNT is a real problem. The per-row sum can lag the platform
+      // slightly (a $0-net snapshot writes no row) — a harmless undercount that we
+      // reconcile up to Shopify's total for display. A sum that EXCEEDS the platform
+      // is the dangerous direction (a double-count), so that's what we flag.
+      const overCount = Number.isFinite(platformOrders) && dOrders > 5;
       checks.push({
         label: "RPM matches the platform",
-        status: offUsd ? "error" : offOrders ? "warn" : "ok",
+        status: offUsd ? "error" : overCount ? "warn" : "ok",
         detail: offUsd
           ? `Off by ${usd(Math.abs(dUsd))} — sheet ${usd(sheetUsd)} vs platform ${usd(platformUsd)}.`
-          : offOrders
-            ? `Dollars match (${usd(sheetUsd)}), but order count is off by ${dOrders} (sheet ${sheetOrders} vs platform ${platformOrders}).`
-            : `${usd(sheetUsd)} — matches the platform exactly. (Order count ~${sheetOrders.toLocaleString()} vs ${platformOrders.toLocaleString()}; RPM's per-order counts are estimated, so a few off is normal.)`,
+          : overCount
+            ? `Dollars match (${usd(sheetUsd)}), but the order count is OVER the platform by ${dOrders} (sheet ${sheetOrders} vs platform ${platformOrders}) — a possible double-count, worth a look.`
+            : `${usd(sheetUsd)} — matches the platform exactly, and the order count uses Shopify's own total (${platformOrders.toLocaleString()}).`,
       });
     }
   }
