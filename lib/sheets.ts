@@ -130,27 +130,14 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
   });
 
-  // RPM order count — display reconciliation. The per-row order_ref sum slightly
-  // UNDERcounts because the scraper writes no row when a snapshot's dollars net to
-  // zero (a refund cancels a sale) even though Shopify still counted those orders.
-  // Shopify's own cumulative "Sales" count (RPM Commissions tab, col B) is
-  // authoritative, so nudge the DISPLAY count up to it by adding the missing orders
-  // to the most recent RPM row. gap is clamped to >= 0, so this can match the
-  // platform but NEVER exceed it — no overcount. computeChecks() already ran on the
-  // raw sum above, so a genuine overcount is still caught by the alert.
-  if (rpmTrack.length > 1) {
-    const platformRpmCount = parseInt(rpmTrack[rpmTrack.length - 1][1], 10);
-    const rawRpmCount = brandOrders["rpm-pickleball"] || 0;
-    const gap = platformRpmCount - rawRpmCount;
-    if (Number.isFinite(platformRpmCount) && gap > 0) {
-      let latest: Row | null = null;
-      for (const row of rows) {
-        if (row.advertiserId === "rpm-pickleball" && (!latest || row.datetime > latest.datetime)) latest = row;
-      }
-      if (latest) latest.orders += gap;
-    }
-  }
-
+  // NOTE: We deliberately do NOT reconcile RPM's per-row order counts up to the
+  // platform's cumulative "Sales" total. An earlier version dumped the whole
+  // count gap onto the most recent RPM row, which correctly matched the all-time
+  // total but badly inflated that DAY's count (e.g. "23 sales today" on ~3 real
+  // orders). The dropped orders come from historical $0-net snapshots we can't
+  // attribute to a specific day, so spreading a small (~1%) all-time UNDERcount is
+  // far less wrong than distorting one day. The dollar total is exact regardless,
+  // and the RPM check only warns on an OVERcount, so this undercount never alarms.
   return { rows, lastScrape, checks };
 }
 
@@ -202,10 +189,11 @@ function computeChecks(o: {
       // for reconstructed historical rows, so a small gap is expected — only a big
       // one is worth a soft flag.
       const offUsd = Math.abs(dUsd) > DOLLAR_TOL;
-      // Only an OVERCOUNT is a real problem. The per-row sum can lag the platform
-      // slightly (a $0-net snapshot writes no row) — a harmless undercount that we
-      // reconcile up to Shopify's total for display. A sum that EXCEEDS the platform
-      // is the dangerous direction (a double-count), so that's what we flag.
+      // Only an OVERCOUNT is a real problem. The per-row count can lag the platform
+      // slightly (a $0-net snapshot writes no row, so a few orders aren't counted) —
+      // a harmless ~1% UNDERcount we leave as-is rather than distort a single day.
+      // A sum that EXCEEDS the platform is the dangerous direction (a double-count),
+      // so that's the only count condition we flag.
       const overCount = Number.isFinite(platformOrders) && dOrders > 5;
       checks.push({
         label: "RPM matches the platform",
@@ -214,7 +202,7 @@ function computeChecks(o: {
           ? `Off by ${usd(Math.abs(dUsd))} — sheet ${usd(sheetUsd)} vs platform ${usd(platformUsd)}.`
           : overCount
             ? `Dollars match (${usd(sheetUsd)}), but the order count is OVER the platform by ${dOrders} (sheet ${sheetOrders} vs platform ${platformOrders}) — a possible double-count, worth a look.`
-            : `${usd(sheetUsd)} — matches the platform exactly, and the order count uses Shopify's own total (${platformOrders.toLocaleString()}).`,
+            : `${usd(sheetUsd)} — matches the platform exactly. (Order count ~${sheetOrders.toLocaleString()} vs platform ${platformOrders.toLocaleString()}; RPM's per-order counts are estimated from deltas, so a small undercount is normal.)`,
       });
     }
   }
