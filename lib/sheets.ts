@@ -130,14 +130,32 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
   });
 
-  // NOTE: We deliberately do NOT reconcile RPM's per-row order counts up to the
-  // platform's cumulative "Sales" total. An earlier version dumped the whole
-  // count gap onto the most recent RPM row, which correctly matched the all-time
-  // total but badly inflated that DAY's count (e.g. "23 sales today" on ~3 real
-  // orders). The dropped orders come from historical $0-net snapshots we can't
-  // attribute to a specific day, so spreading a small (~1%) all-time UNDERcount is
-  // far less wrong than distorting one day. The dollar total is exact regardless,
-  // and the RPM check only warns on an OVERcount, so this undercount never alarms.
+  // RPM per-row order count — gentle, capped reconciliation. A commission-bearing
+  // RPM row can read 0 orders when the platform's EARNINGS ticked up before its
+  // Sales COUNTER did (delta timing), which looks broken ("0 sales, but $91.80").
+  // Any row with commission is at least one real sale, so floor such rows at 1 —
+  // but only enough of them (most-recent first) to reach the platform's cumulative
+  // count, never past it. This fixes today/recent days without inflating any single
+  // day (each gets +1 = one real sale) and can NEVER exceed the platform (no
+  // overcount). Older rows beyond the shortfall stay as-is. Earlier approaches
+  // either dumped the whole gap on one row (inflated that day) or left 0s showing.
+  if (rpmTrack.length > 1) {
+    const platformRpmCount = parseInt(rpmTrack[rpmTrack.length - 1][1], 10);
+    const rpmRows = rows.filter((r) => r.advertiserId === "rpm-pickleball");
+    const rawSum = rpmRows.reduce((s, r) => s + r.orders, 0);
+    let headroom = platformRpmCount - rawSum; // orders we may add without exceeding platform
+    if (Number.isFinite(platformRpmCount) && headroom > 0) {
+      const lag = rpmRows
+        .filter((r) => r.commission > 0 && r.orders < 1)
+        .sort((a, b) => b.datetime.localeCompare(a.datetime)); // most recent first
+      for (const r of lag) {
+        if (headroom <= 0) break;
+        r.orders = 1;
+        headroom -= 1;
+      }
+    }
+  }
+
   return { rows, lastScrape, checks };
 }
 
