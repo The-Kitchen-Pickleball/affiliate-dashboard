@@ -22,7 +22,9 @@ export function heartbeatLabel(s: string): string {
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
   if (!m) return s;
   const [, y, mo, d, hh, mm, ss] = m.map(Number) as unknown as number[];
-  return new Date(y, mo - 1, d, hh, mm, ss).toLocaleString("en-US", {
+  // The stored value is already Central wall-clock; we render its literal
+  // components and label them CT so it never appears in the viewer's own zone.
+  const formatted = new Date(y, mo - 1, d, hh, mm, ss).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -31,6 +33,7 @@ export function heartbeatLabel(s: string): string {
     second: "2-digit",
     hour12: true,
   });
+  return `${formatted} CT`;
 }
 
 /** Compact heartbeat for mobile: "8/26/26, 2:06 PM" (numeric date, no seconds). */
@@ -41,7 +44,7 @@ export function heartbeatShort(s: string): string {
   const yy = String(y).slice(2);
   const hour = hh % 12 === 0 ? 12 : hh % 12;
   const ampm = hh >= 12 ? "PM" : "AM";
-  return `${mo}/${d}/${yy}, ${hour}:${String(mm).padStart(2, "0")} ${ampm}`;
+  return `${mo}/${d}/${yy}, ${hour}:${String(mm).padStart(2, "0")} ${ampm} CT`;
 }
 
 /** "Aug '26" style label from an ISO "YYYY-MM" month key. */
