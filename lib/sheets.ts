@@ -225,6 +225,29 @@ function computeChecks(o: {
     }
   }
 
+  // 2b. RPM freshness — its own alert. RPM runs NON-FATAL (Shopify Collabs has no
+  // API, its session cookies expire ~daily, and 2FA now blocks auto-login), so a
+  // stale RPM no longer freezes the whole heartbeat. This surfaces it directly:
+  // the "RPM Commissions" tab logs scraped_at on every successful RPM run, so if
+  // that's >5h old during active hours, the Collabs cookies almost certainly need
+  // a refresh. This is the replacement signal for the old frozen-heartbeat behavior.
+  if (o.rpmTrack.length > 1) {
+    const rpmScrapedAt = o.rpmTrack[o.rpmTrack.length - 1][0];
+    if (rpmScrapedAt && /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(rpmScrapedAt)) {
+      const now = nowCentral();
+      const rpmHours = (Date.parse(now.replace(" ", "T")) - Date.parse(rpmScrapedAt.replace(" ", "T"))) / 3_600_000;
+      const centralHour = Number(now.slice(11, 13));
+      const rpmStale = Number.isFinite(rpmHours) && rpmHours > 5 && centralHour >= 7 && centralHour < 23;
+      checks.push({
+        label: "RPM is updating",
+        status: rpmStale ? "error" : "ok",
+        detail: rpmStale
+          ? `RPM hasn't updated in ${rpmHours.toFixed(1)}h (last ${rpmScrapedAt}) — its Shopify Collabs login cookies have likely expired and need a refresh.`
+          : `Last RPM update ${rpmScrapedAt}.`,
+      });
+    }
+  }
+
   // 3. Other brands with platform-truth (Audit Aggregates → SocialSnowball etc.).
   const offBrands: string[] = [];
   const offBrandIds: string[] = [];
