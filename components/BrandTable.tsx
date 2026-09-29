@@ -208,7 +208,7 @@ function FragmentRow({
                   src={logo}
                   alt=""
                   loading="lazy"
-                  className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-border"
+                  className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-white sm:h-7 sm:w-7"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).style.display = "none";
                   }}

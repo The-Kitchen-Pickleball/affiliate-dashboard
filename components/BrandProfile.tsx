@@ -151,7 +151,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             <img
               src={logo}
               alt=""
-              className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-border"
+              className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
