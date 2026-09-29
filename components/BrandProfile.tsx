@@ -143,8 +143,9 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         onClick={() => setOpen((v) => !v)}
         role="button"
         aria-expanded={open}
-        className="flex cursor-pointer flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 hover:bg-surface-2"
+        className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
       >
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         {(() => {
           const logo = getBrandLogo(advertiserId);
           return logo ? (
@@ -191,7 +192,8 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         >
           🔑<span className="hidden sm:inline"> Login</span>
         </button>
-        <div className="ml-auto flex items-center gap-2">
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           {onBack && (
             <button
               onClick={(e) => {
