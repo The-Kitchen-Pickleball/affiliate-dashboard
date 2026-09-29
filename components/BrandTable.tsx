@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { BrandDetail } from "@/lib/analytics";
 import { usd, num, shortDate } from "@/lib/format";
+import { getBrandLogo } from "@/lib/brandLogos";
 
 const STATUS_COLOR: Record<string, string> = {
   approved: "var(--good)",
@@ -200,6 +201,20 @@ function FragmentRow({
             >
               ▸
             </span>
+            {(() => {
+              const logo = getBrandLogo(r.advertiserId);
+              return logo ? (
+                <img
+                  src={logo}
+                  alt=""
+                  loading="lazy"
+                  className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-border"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : null;
+            })()}
             {onSelectBrand ? (
               <button
                 type="button"
