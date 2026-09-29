@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getBrandProfile } from "@/lib/brandProfiles";
+import { getBrandLogo } from "@/lib/brandLogos";
 
 const STATUS_STYLE: Record<string, { dot: string; label: string }> = {
   Connected: { dot: "var(--good)", label: "Connected" },
@@ -144,6 +145,19 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         aria-expanded={open}
         className="flex cursor-pointer flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 hover:bg-surface-2"
       >
+        {(() => {
+          const logo = getBrandLogo(advertiserId);
+          return logo ? (
+            <img
+              src={logo}
+              alt=""
+              className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-border"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : null;
+        })()}
         <h2 className="text-base font-semibold">{advertiser}</h2>
         {status && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-text-secondary">
