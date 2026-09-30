@@ -25,7 +25,7 @@ import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { BrandProfile } from "./BrandProfile";
-import { PayoutsSection } from "./PayoutsSection";
+import { PayoutsView } from "./PayoutsView";
 import { HealthReportModal } from "./HealthReportModal";
 import { AveragesSection } from "./AveragesSection";
 
@@ -75,6 +75,9 @@ export function Dashboard() {
       return next;
     });
   }, []);
+  // Top-level tab: the date-filtered "Sales" dashboard, or the "Payouts" standing
+  // (lifetime balances — kept separate because they don't respond to the date filter).
+  const [tab, setTab] = useState<"sales" | "payouts">("sales");
   // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
   const [brand, setBrand] = useState<string | null>(null);
 
@@ -326,7 +329,31 @@ export function Dashboard() {
         </div>
       </header>
 
-      {/* Filters */}
+      {/* Top-level tabs: Sales (date-filtered) vs Payouts (lifetime standing) */}
+      <div className="mb-5 flex justify-center gap-1 rounded-full border border-border bg-surface p-1 sm:w-fit sm:mx-auto">
+        {([
+          ["sales", "Sales"],
+          ["payouts", "Payouts"],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => {
+              if (key === "payouts" && brand) selectBrand(null); // leave any brand drill-in
+              setTab(key);
+            }}
+            className={`flex-1 rounded-full px-5 py-1.5 text-sm font-medium transition sm:flex-none ${
+              tab === key
+                ? "bg-[var(--brand)] text-white shadow-sm"
+                : "text-text-secondary hover:bg-surface-2"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters — only on the Sales tab (Payouts is a lifetime standing, not date-filtered) */}
+      {tab === "sales" && (
       <div className="mb-5">
         <Filters
           preset={preset}
@@ -346,8 +373,18 @@ export function Dashboard() {
           }}
         />
       </div>
+      )}
 
-      {!view ? (
+      {tab === "payouts" ? (
+        data ? (
+          <PayoutsView
+            payouts={data.payouts}
+            brandName={(id) => data.rows.find((r) => r.advertiserId === id)?.advertiser ?? id}
+          />
+        ) : (
+          <LoadingSkeleton />
+        )
+      ) : !view ? (
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-5">
@@ -414,15 +451,6 @@ export function Dashboard() {
           {/* Brand list first (per Dane), then the trend graph. In a brand view this
               is just that one brand — still handy for its transaction drill-down. */}
           <BrandTable rows={view.brands} onSelectBrand={brand ? undefined : selectBrand} singleBrand={!!brand} />
-
-          {/* Payouts — what each brand still owes us (lifetime balance, only where the
-              platform reports paid status). Shown in the all-brands view. */}
-          {!brand && data && data.payouts.length > 0 && (
-            <PayoutsSection
-              payouts={data.payouts}
-              brandName={(id) => data.rows.find((r) => r.advertiserId === id)?.advertiser ?? id}
-            />
-          )}
 
           <TrendChart
             data={trendData}

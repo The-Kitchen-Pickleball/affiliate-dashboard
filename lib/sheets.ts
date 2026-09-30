@@ -56,7 +56,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${COMMISSIONS_TAB}!A:V` }),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${STATUS_TAB}!A2` }).catch(() => null),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${RPM_TRACK_TAB}!A:E` }).catch(() => null),
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${AUDIT_TAB}!A:G` }).catch(() => null),
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${AUDIT_TAB}!A:H` }).catch(() => null),
   ]);
 
   const values = commRes.data.values ?? [];
@@ -126,23 +126,40 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
 
-  // Payout tracker: which brands report paid-vs-owed, from the Audit Aggregates tab
-  // (lifetime_paid_usd / lifetime_outstanding_usd). Only platforms that expose
-  // payout status populate these (SocialSnowball, UpPromote); the rest stay $0 and
-  // are dropped here so the Payouts view only shows brands with real data.
-  const payouts: PayoutRow[] = auditVals
-    .slice(1)
-    .map((r) => ({
-      advertiserId: (r[0] ?? "").toLowerCase(),
-      paid: parseFloat(r[2]) || 0,
-      outstanding: parseFloat(r[3]) || 0,
-      total: parseFloat(r[4]) || 0,
-    }))
-    // Only brands with a real PAID history: paid > 0 proves the platform actually
-    // tracks payout status, so "owed" (outstanding) is trustworthy. A brand at
-    // paid=$0 either doesn't report payouts (e.g. pays outside the platform) or is
-    // genuinely unpaid — we can't tell, so we don't show a misleading "owed".
-    .filter((p) => p.advertiserId && p.paid > 0);
+  // Payout tracker: one row per brand, covering EVERY brand we have data for.
+  // A brand is "tracked" only when its platform reports a real PAID history
+  // (paid > 0 in the Audit Aggregates tab) — that proves the platform exposes
+  // payout status, so "still owed" (outstanding) is trustworthy. Brands at
+  // paid=$0 either pay outside the platform (e.g. UpPromote → Honolulu) or are
+  // genuinely unpaid, and we can't tell which, so we mark them "can't be tracked"
+  // rather than show a misleading "owed". The dashboard's Payouts tab shows a
+  // status line for all of them.
+  const auditById = new Map(
+    auditVals.slice(1).map((r) => [
+      (r[0] ?? "").toLowerCase(),
+      {
+        paid: parseFloat(r[2]) || 0,
+        outstanding: parseFloat(r[3]) || 0,
+        total: parseFloat(r[4]) || 0,
+        lastPayout: (r[7] ?? "").trim() || null, // col H: last_payout_date (best-effort)
+      },
+    ]),
+  );
+  // Universe of brands = every advertiser_id seen on the Comissions tab.
+  const brandIds = [...new Set(rows.map((r) => r.advertiserId))].filter(Boolean);
+  const payouts: PayoutRow[] = brandIds.map((id) => {
+    const a = auditById.get(id);
+    const paid = a?.paid ?? 0;
+    const tracked = paid > 0;
+    return {
+      advertiserId: id,
+      tracked,
+      paid,
+      outstanding: tracked ? a?.outstanding ?? 0 : 0,
+      total: tracked ? a?.total ?? 0 : 0,
+      lastPayout: tracked ? a?.lastPayout ?? null : null,
+    };
+  });
 
   const checks = computeChecks({
     lastScrape, brandComm, brandOrders, brandRecent, brandPriorDays,

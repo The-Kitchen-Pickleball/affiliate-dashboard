@@ -35,11 +35,16 @@ export interface HealthCheck {
  *  platform reports payout status (SocialSnowball, UpPromote that tracks paid). */
 export interface PayoutRow {
   advertiserId: string;
+  /** True when the platform reports a real paid history (paid > 0), so paid/owed
+   *  are trustworthy. False = "can't be tracked" (pays off-platform or no data). */
+  tracked: boolean;
   /** Commission the platform records as already paid out to us (dollars). */
   paid: number;
   /** Approved commission not yet paid — what the brand still owes us (dollars). */
   outstanding: number;
   total: number;
+  /** Most recent completed-payout date ("YYYY-MM-DD"), or null if not captured. */
+  lastPayout: string | null;
 }
 
 export interface ApiResponse {
