@@ -78,6 +78,11 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
 
   const rows: Row[] = [];
   const brandComm: Record<string, number> = {};
+  // Approved-only commission per brand. The platform aggregates (paid + approved-
+  // outstanding) exclude pending, so the "matches platform" check compares against
+  // THIS, not brandComm — otherwise a brand carrying pending commission (e.g.
+  // UpPromote/Honolulu) looks "off" by exactly its pending balance (a false alarm).
+  const brandApprovedComm: Record<string, number> = {};
   const brandOrders: Record<string, number> = {};
   const brandRecent: Record<string, number> = {}; // sales in the last 3 days
   const brandPriorDays: Record<string, Set<string>> = {}; // distinct active days, days 3–30 ago
@@ -95,7 +100,9 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     const oc = parseInt(ocRaw, 10);
     const orders = advertiserId === "rpm-pickleball" && ocRaw !== "" && Number.isFinite(oc) ? oc : 1;
     const commission = toDollars(r[iComm]);
+    const st = normalizeStatus(r[iStatus]);
     brandComm[advertiserId] = (brandComm[advertiserId] || 0) + commission;
+    if (st === "approved") brandApprovedComm[advertiserId] = (brandApprovedComm[advertiserId] || 0) + commission;
     brandOrders[advertiserId] = (brandOrders[advertiserId] || 0) + orders;
 
     const date = datetime.slice(0, 10);
@@ -117,7 +124,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
       datetime,
       sale: toDollars(r[iSale]),
       commission,
-      status: normalizeStatus(r[iStatus]),
+      status: st,
       orders,
     });
   }
@@ -162,7 +169,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   });
 
   const checks = computeChecks({
-    lastScrape, brandComm, brandOrders, brandRecent, brandPriorDays,
+    lastScrape, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
     rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
   });
 
@@ -199,6 +206,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
 function computeChecks(o: {
   lastScrape: string | null;
   brandComm: Record<string, number>;
+  brandApprovedComm: Record<string, number>;
   brandOrders: Record<string, number>;
   brandRecent: Record<string, number>;
   brandPriorDays: Record<string, Set<string>>;
@@ -294,7 +302,10 @@ function computeChecks(o: {
     const platformTotal = parseFloat(o.auditVals[i][4]);
     if (!advertiserId || !Number.isFinite(platformTotal) || platformTotal <= 0) continue;
     brandsChecked++;
-    const sheet = o.brandComm[advertiserId] || 0;
+    // Compare approved-only against the platform total (paid + approved-outstanding).
+    // Pending sheet commission isn't in the platform number, so including it would
+    // flag a brand as "off" by its whole pending balance (false alarm — Honolulu).
+    const sheet = o.brandApprovedComm[advertiserId] || 0;
     const diff = sheet - platformTotal;
     if (Math.abs(diff) > DOLLAR_TOL && Math.abs(diff) / platformTotal > PCT_TOL) {
       offBrands.push(`${advertiserId} off by ${usd(Math.abs(diff))} (sheet ${usd(sheet)} vs ${usd(platformTotal)})`);
