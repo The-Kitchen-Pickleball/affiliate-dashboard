@@ -225,24 +225,25 @@ function computeChecks(o: {
     }
   }
 
-  // 2b. RPM freshness — its own alert. RPM runs NON-FATAL (Shopify Collabs has no
-  // API, its session cookies expire ~daily, and 2FA now blocks auto-login), so a
-  // stale RPM no longer freezes the whole heartbeat. This surfaces it directly:
-  // the "RPM Commissions" tab logs scraped_at on every successful RPM run, so if
-  // that's >5h old during active hours, the Collabs cookies almost certainly need
-  // a refresh. This is the replacement signal for the old frozen-heartbeat behavior.
+  // 2b. RPM freshness — its own alert. RPM now runs on Dane's Mac (home IP) via a
+  // launchd job every ~90 min WHENEVER THE MAC IS ON (Shopify kills Collabs
+  // sessions used from the cloud). So a normal overnight gap while the Mac sleeps
+  // (8-12h+) is expected and self-heals on wake — it must NOT alarm. Only flag when
+  // it's stale far longer than any normal sleep (>20h ≈ the Mac was off a full day,
+  // or the session genuinely died). The "RPM Commissions" tab logs scraped_at on
+  // every successful run. Threshold raised from 5h→20h + active-hours gate removed
+  // when RPM moved to the Mac (2026-09-30).
   if (o.rpmTrack.length > 1) {
     const rpmScrapedAt = o.rpmTrack[o.rpmTrack.length - 1][0];
     if (rpmScrapedAt && /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(rpmScrapedAt)) {
       const now = nowCentral();
       const rpmHours = (Date.parse(now.replace(" ", "T")) - Date.parse(rpmScrapedAt.replace(" ", "T"))) / 3_600_000;
-      const centralHour = Number(now.slice(11, 13));
-      const rpmStale = Number.isFinite(rpmHours) && rpmHours > 5 && centralHour >= 7 && centralHour < 23;
+      const rpmStale = Number.isFinite(rpmHours) && rpmHours > 20;
       checks.push({
         label: "RPM is updating",
         status: rpmStale ? "error" : "ok",
         detail: rpmStale
-          ? `RPM hasn't updated in ${rpmHours.toFixed(1)}h (last ${rpmScrapedAt}) — its Shopify Collabs login cookies have likely expired and need a refresh.`
+          ? `RPM hasn't updated in ${rpmHours.toFixed(1)}h (last ${rpmScrapedAt}) — it runs on Dane's Mac, so first make sure the Mac has been on; if it stays stale, its Collabs cookies may need a refresh.`
           : `Last RPM update ${rpmScrapedAt}.`,
       });
     }
