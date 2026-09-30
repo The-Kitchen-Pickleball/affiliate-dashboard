@@ -25,6 +25,7 @@ import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { BrandProfile } from "./BrandProfile";
+import { PayoutsSection } from "./PayoutsSection";
 import { HealthReportModal } from "./HealthReportModal";
 import { AveragesSection } from "./AveragesSection";
 
@@ -413,6 +414,15 @@ export function Dashboard() {
           {/* Brand list first (per Dane), then the trend graph. In a brand view this
               is just that one brand — still handy for its transaction drill-down. */}
           <BrandTable rows={view.brands} onSelectBrand={brand ? undefined : selectBrand} singleBrand={!!brand} />
+
+          {/* Payouts — what each brand still owes us (lifetime balance, only where the
+              platform reports paid status). Shown in the all-brands view. */}
+          {!brand && data && data.payouts.length > 0 && (
+            <PayoutsSection
+              payouts={data.payouts}
+              brandName={(id) => data.rows.find((r) => r.advertiserId === id)?.advertiser ?? id}
+            />
+          )}
 
           <TrendChart
             data={trendData}

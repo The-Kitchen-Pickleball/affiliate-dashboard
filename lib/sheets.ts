@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import type { Row, Status, HealthCheck } from "./types";
+import type { Row, Status, HealthCheck, PayoutRow } from "./types";
 
 /**
  * Reads the shared commissions Google Sheet server-side via the affiliate
@@ -48,7 +48,7 @@ function addDays(d: string, n: number): string {
 
 const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | null; checks: HealthCheck[] }> {
+export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | null; checks: HealthCheck[]; payouts: PayoutRow[] }> {
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as never });
 
@@ -125,6 +125,25 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const lastScrape = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
+
+  // Payout tracker: which brands report paid-vs-owed, from the Audit Aggregates tab
+  // (lifetime_paid_usd / lifetime_outstanding_usd). Only platforms that expose
+  // payout status populate these (SocialSnowball, UpPromote); the rest stay $0 and
+  // are dropped here so the Payouts view only shows brands with real data.
+  const payouts: PayoutRow[] = auditVals
+    .slice(1)
+    .map((r) => ({
+      advertiserId: (r[0] ?? "").toLowerCase(),
+      paid: parseFloat(r[2]) || 0,
+      outstanding: parseFloat(r[3]) || 0,
+      total: parseFloat(r[4]) || 0,
+    }))
+    // Only brands with a real PAID history: paid > 0 proves the platform actually
+    // tracks payout status, so "owed" (outstanding) is trustworthy. A brand at
+    // paid=$0 either doesn't report payouts (e.g. pays outside the platform) or is
+    // genuinely unpaid — we can't tell, so we don't show a misleading "owed".
+    .filter((p) => p.advertiserId && p.paid > 0);
+
   const checks = computeChecks({
     lastScrape, brandComm, brandOrders, brandRecent, brandPriorDays,
     rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
@@ -156,7 +175,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     }
   }
 
-  return { rows, lastScrape, checks };
+  return { rows, lastScrape, checks, payouts };
 }
 
 /** The morning health check — the same things I verify by hand, on demand. */

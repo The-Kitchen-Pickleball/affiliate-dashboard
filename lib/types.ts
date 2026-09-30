@@ -31,12 +31,25 @@ export interface HealthCheck {
   dismissId?: string;
 }
 
+/** Per-brand payout state, from the Audit Aggregates tab. Only brands whose
+ *  platform reports payout status (SocialSnowball, UpPromote that tracks paid). */
+export interface PayoutRow {
+  advertiserId: string;
+  /** Commission the platform records as already paid out to us (dollars). */
+  paid: number;
+  /** Approved commission not yet paid — what the brand still owes us (dollars). */
+  outstanding: number;
+  total: number;
+}
+
 export interface ApiResponse {
   rows: Row[];
   /** When the underlying sheet was last successfully scraped (Status tab). */
   lastScrape: string | null;
   /** Live health checks run on every load (shown in the health modal + banner). */
   checks: HealthCheck[];
+  /** Per-brand paid-vs-owed, for brands whose platform reports payout status. */
+  payouts: PayoutRow[];
   /** When this API response was generated (ISO). */
   fetchedAt: string;
 }
