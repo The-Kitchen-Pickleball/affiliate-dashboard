@@ -352,11 +352,9 @@ export function Dashboard() {
             ))}
             <a
               href="https://kitchen-social.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
               className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition hover:bg-surface-2"
             >
-              Partners ↗
+              Partners
             </a>
           </nav>
           <button
@@ -407,12 +405,10 @@ export function Dashboard() {
                   ))}
                   <a
                     href="https://kitchen-social.vercel.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     onClick={() => setNavOpen(false)}
                     className="block w-full px-4 py-2.5 text-left text-sm font-medium text-text-secondary transition hover:bg-surface-2"
                   >
-                    Partners ↗
+                    Partners
                   </a>
                 </div>
               </>
