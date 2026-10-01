@@ -51,6 +51,7 @@ const LOGO_FILE: Record<string, string> = {
   slyce: "slyce.jpg",
   speedup: "speedup.jpg",
   thrive: "thrive.jpg",
+  tonyroig: "tonyroig.jpg",
   udrippin: "udrippin.jpg",
   vatic: "vatic.jpg",
   volair: "volair.jpg",
