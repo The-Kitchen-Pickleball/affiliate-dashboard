@@ -78,6 +78,8 @@ export function Dashboard() {
   // Top-level tab: the date-filtered "Sales" dashboard, or the "Payouts" standing
   // (lifetime balances — kept separate because they don't respond to the date filter).
   const [tab, setTab] = useState<"sales" | "payouts">("sales");
+  // Mobile nav (hamburger) open state.
+  const [navOpen, setNavOpen] = useState(false);
   // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
   const [brand, setBrand] = useState<string | null>(null);
 
@@ -101,6 +103,24 @@ export function Dashboard() {
   const resetAll = useCallback(() => {
     window.location.assign("/");
   }, []);
+
+  // Switch top-level view (Sales / Payouts). Leaves any brand drill-in and closes
+  // the mobile menu.
+  const goTab = useCallback(
+    (key: "sales" | "payouts") => {
+      setBrand((b) => {
+        if (b) {
+          window.history.pushState({}, "", window.location.pathname);
+          return null;
+        }
+        return b;
+      });
+      setTab(key);
+      setNavOpen(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [],
+  );
 
   const loadData = useCallback(() => {
     setRefreshing(true);
@@ -313,7 +333,24 @@ export function Dashboard() {
               );
             })()}
         </div>
-        <div className="flex items-center gap-2 justify-self-end">
+        <div className="flex items-center gap-1 justify-self-end sm:gap-2">
+          {/* Desktop nav links */}
+          <nav className="mr-1 hidden items-center gap-1 sm:flex">
+            {([
+              ["sales", "Sales"],
+              ["payouts", "Payouts"],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => goTab(key)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                  tab === key ? "text-[var(--brand)]" : "text-text-secondary hover:bg-surface-2"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
           <button
             onClick={loadData}
             disabled={refreshing}
@@ -326,31 +363,46 @@ export function Dashboard() {
             </span>
           </button>
           <ThemeToggle />
+          {/* Mobile hamburger */}
+          <div className="relative sm:hidden">
+            <button
+              onClick={() => setNavOpen((o) => !o)}
+              aria-label="Menu"
+              aria-expanded={navOpen}
+              className="rounded-lg border border-border bg-surface px-2 py-1 text-xl leading-none hover:bg-surface-2"
+            >
+              {navOpen ? "✕" : "☰"}
+            </button>
+            {navOpen && (
+              <>
+                {/* click-away backdrop */}
+                <button
+                  aria-hidden
+                  tabIndex={-1}
+                  onClick={() => setNavOpen(false)}
+                  className="fixed inset-0 z-10 cursor-default"
+                />
+                <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-border bg-surface-1 shadow-lg">
+                  {([
+                    ["sales", "Sales"],
+                    ["payouts", "Payouts"],
+                  ] as const).map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => goTab(key)}
+                      className={`block w-full px-4 py-2.5 text-left text-sm font-medium transition ${
+                        tab === key ? "bg-surface-2 text-[var(--brand)]" : "text-text-secondary hover:bg-surface-2"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
-
-      {/* Top-level tabs: Sales (date-filtered) vs Payouts (lifetime standing) */}
-      <div className="mb-5 flex justify-center gap-1 rounded-full border border-border bg-surface p-1 sm:w-fit sm:mx-auto">
-        {([
-          ["sales", "Sales"],
-          ["payouts", "Payouts"],
-        ] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => {
-              if (key === "payouts" && brand) selectBrand(null); // leave any brand drill-in
-              setTab(key);
-            }}
-            className={`flex-1 rounded-full px-5 py-1.5 text-sm font-medium transition sm:flex-none ${
-              tab === key
-                ? "bg-[var(--brand)] text-white shadow-sm"
-                : "text-text-secondary hover:bg-surface-2"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       {/* Filters — only on the Sales tab (Payouts is a lifetime standing, not date-filtered) */}
       {tab === "sales" && (
