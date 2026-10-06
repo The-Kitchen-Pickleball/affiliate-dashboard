@@ -339,12 +339,15 @@ function computeChecks(o: {
   //     heartbeat has missed ~2 runs in a row. Comparing to the heartbeat (not the
   //     clock) keeps this quiet overnight and when GitHub delays a run.
   //     RPM is skipped — it runs on Dane's Mac and has its own 20h check above.
+  //     Gruvn is skipped at Dane's request (2026-10-06): no sales ever, and its
+  //     login has been broken since July — not worth an alert.
   //     A retired brand will keep showing here until its row is deleted from both tabs.
   if (o.lastScrape) {
     const lastRun = Date.parse(o.lastScrape.replace(" ", "T"));
+    const NOT_MONITORED = new Set(["rpm-pickleball", "gruvn"]);
     const latest = new Map<string, string>();
     const note = (id: string, at: string) => {
-      if (!id || id === "rpm-pickleball" || !Number.isFinite(Date.parse(at.replace(" ", "T")))) return;
+      if (!id || NOT_MONITORED.has(id) || !Number.isFinite(Date.parse(at.replace(" ", "T")))) return;
       if (!latest.has(id) || at > latest.get(id)!) latest.set(id, at);
     };
     for (const r of o.brandStatusVals.slice(1)) note(String(r[0] ?? "").toLowerCase(), String(r[1] ?? ""));
