@@ -324,6 +324,38 @@ function computeChecks(o: {
     });
   }
 
+  // 3b. Every brand is updating. "Scraper is running" only proves the overall run
+  //     finished — a single brand can fail inside it (e.g. its login breaks) while
+  //     the run still counts as a success. That's how Selkirk/Speedup/Slyce/Kitchen
+  //     Blockers silently froze for a day in Oct 2026 (and Gruvn since July). Each
+  //     brand stamps captured_at (col G, Central) in Audit Aggregates on every
+  //     successful scrape, so compare it to the latest run's heartbeat: a brand more
+  //     than 3h behind has missed ~2 runs in a row. Comparing to the heartbeat (not
+  //     the clock) keeps this quiet overnight and when GitHub delays a run.
+  //     Brands without an aggregate (RPM, Kajabi, PBG, GoAffPro…) aren't covered here.
+  if (o.lastScrape) {
+    const lastRun = Date.parse(o.lastScrape.replace(" ", "T"));
+    const behind: string[] = [];
+    for (let i = 1; i < o.auditVals.length; i++) {
+      const advertiserId = String(o.auditVals[i][0] ?? "").toLowerCase();
+      const capturedAt = String(o.auditVals[i][6] ?? "");
+      const captured = Date.parse(capturedAt.replace(" ", "T"));
+      if (!advertiserId || !Number.isFinite(captured) || !Number.isFinite(lastRun)) continue;
+      const hoursBehind = (lastRun - captured) / 3_600_000;
+      if (hoursBehind > 3) {
+        const age = hoursBehind >= 48 ? `${Math.round(hoursBehind / 24)} days` : `${Math.round(hoursBehind)}h`;
+        behind.push(`${advertiserId} (last updated ${capturedAt.slice(0, 16)}, ${age} ago)`);
+      }
+    }
+    checks.push({
+      label: "Every brand is updating",
+      status: behind.length ? "error" : "ok",
+      detail: behind.length
+        ? `${behind.length} brand${behind.length > 1 ? "s are" : " is"} failing to update — usually a login problem. Their numbers are frozen until fixed: ${behind.join("; ")}.`
+        : "Every brand updated in the latest scrape.",
+    });
+  }
+
   // 4. (Removed 2026-09-11 at Dane's request) The "went-quiet" watch flagged a
   //    regularly-active brand with no recent sales. It produced noise for brands
   //    just having a genuinely slow stretch, which Dane doesn't want alerts about.
