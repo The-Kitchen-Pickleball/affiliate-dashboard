@@ -10,6 +10,7 @@ const SHEET_ID = process.env.GOOGLE_SHEET_ID!;
 const COMMISSIONS_TAB = "Comissions"; // sic — real tab name has one M
 const STATUS_TAB = "Status";
 const RPM_TRACK_TAB = "RPM Commissions"; // RPM platform cumulative lives here
+const BRAND_STATUS_TAB = "Brand Status"; // per-brand last successful update (written by the scrapers' shared write paths)
 const AUDIT_TAB = "Audit Aggregates"; // per-brand platform totals (SocialSnowball etc.)
 
 function getAuth() {
@@ -52,11 +53,12 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as never });
 
-  const [commRes, statusRes, rpmRes, auditRes] = await Promise.all([
+  const [commRes, statusRes, rpmRes, auditRes, brandStatusRes] = await Promise.all([
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${COMMISSIONS_TAB}!A:V` }),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${STATUS_TAB}!A2` }).catch(() => null),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${RPM_TRACK_TAB}!A:E` }).catch(() => null),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${AUDIT_TAB}!A:H` }).catch(() => null),
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${BRAND_STATUS_TAB}!A:B` }).catch(() => null),
   ]);
 
   const values = commRes.data.values ?? [];
@@ -132,6 +134,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const lastScrape = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
+  const brandStatusVals = (brandStatusRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
 
   // Payout tracker: one row per brand, covering EVERY brand we have data for.
   // A brand is "tracked" only when its platform reports a real PAID history
@@ -170,7 +173,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
 
   const checks = computeChecks({
     lastScrape, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
-    rpmTrack, auditVals, futureDated, badTimestamp, duplicateIds,
+    rpmTrack, auditVals, brandStatusVals, futureDated, badTimestamp, duplicateIds,
   });
 
   // RPM per-row order count — gentle, capped reconciliation. A commission-bearing
@@ -212,6 +215,7 @@ function computeChecks(o: {
   brandPriorDays: Record<string, Set<string>>;
   rpmTrack: string[][];
   auditVals: string[][];
+  brandStatusVals: string[][];
   futureDated: number;
   badTimestamp: number;
   duplicateIds: number;
@@ -327,24 +331,30 @@ function computeChecks(o: {
   // 3b. Every brand is updating. "Scraper is running" only proves the overall run
   //     finished — a single brand can fail inside it (e.g. its login breaks) while
   //     the run still counts as a success. That's how Selkirk/Speedup/Slyce/Kitchen
-  //     Blockers silently froze for a day in Oct 2026 (and Gruvn since July). Each
-  //     brand stamps captured_at (col G, Central) in Audit Aggregates on every
-  //     successful scrape, so compare it to the latest run's heartbeat: a brand more
-  //     than 3h behind has missed ~2 runs in a row. Comparing to the heartbeat (not
-  //     the clock) keeps this quiet overnight and when GitHub delays a run.
-  //     Brands without an aggregate (RPM, Kajabi, PBG, GoAffPro…) aren't covered here.
+  //     Blockers silently froze for a day in Oct 2026 (and Gruvn since July).
+  //     Every successful brand write stamps last_success_at in the "Brand Status"
+  //     tab (shared reconcileToSheets / appendDeltaRow); Audit Aggregates'
+  //     captured_at (col G) is used too, so brands that stopped before Brand Status
+  //     existed are still caught. A brand more than 3h behind the latest run's
+  //     heartbeat has missed ~2 runs in a row. Comparing to the heartbeat (not the
+  //     clock) keeps this quiet overnight and when GitHub delays a run.
+  //     RPM is skipped — it runs on Dane's Mac and has its own 20h check above.
+  //     A retired brand will keep showing here until its row is deleted from both tabs.
   if (o.lastScrape) {
     const lastRun = Date.parse(o.lastScrape.replace(" ", "T"));
+    const latest = new Map<string, string>();
+    const note = (id: string, at: string) => {
+      if (!id || id === "rpm-pickleball" || !Number.isFinite(Date.parse(at.replace(" ", "T")))) return;
+      if (!latest.has(id) || at > latest.get(id)!) latest.set(id, at);
+    };
+    for (const r of o.brandStatusVals.slice(1)) note(String(r[0] ?? "").toLowerCase(), String(r[1] ?? ""));
+    for (const r of o.auditVals.slice(1)) note(String(r[0] ?? "").toLowerCase(), String(r[6] ?? ""));
     const behind: string[] = [];
-    for (let i = 1; i < o.auditVals.length; i++) {
-      const advertiserId = String(o.auditVals[i][0] ?? "").toLowerCase();
-      const capturedAt = String(o.auditVals[i][6] ?? "");
-      const captured = Date.parse(capturedAt.replace(" ", "T"));
-      if (!advertiserId || !Number.isFinite(captured) || !Number.isFinite(lastRun)) continue;
-      const hoursBehind = (lastRun - captured) / 3_600_000;
-      if (hoursBehind > 3) {
+    for (const [id, at] of latest) {
+      const hoursBehind = (lastRun - Date.parse(at.replace(" ", "T"))) / 3_600_000;
+      if (Number.isFinite(hoursBehind) && hoursBehind > 3) {
         const age = hoursBehind >= 48 ? `${Math.round(hoursBehind / 24)} days` : `${Math.round(hoursBehind)}h`;
-        behind.push(`${advertiserId} (last updated ${capturedAt.slice(0, 16)}, ${age} ago)`);
+        behind.push(`${id} (last updated ${at.slice(0, 16)}, ${age} ago)`);
       }
     }
     checks.push({
@@ -352,7 +362,7 @@ function computeChecks(o: {
       status: behind.length ? "error" : "ok",
       detail: behind.length
         ? `${behind.length} brand${behind.length > 1 ? "s are" : " is"} failing to update — usually a login problem. Their numbers are frozen until fixed: ${behind.join("; ")}.`
-        : "Every brand updated in the latest scrape.",
+        : `All ${latest.size} monitored brands updated in the latest scrape.`,
     });
   }
 
