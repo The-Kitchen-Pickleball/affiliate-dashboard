@@ -12,8 +12,7 @@ import {
   monthly,
   monthRange,
   rangeFor,
-  previousRange,
-  previousRangeCustom,
+  addDays,
   todayCentral,
   totals,
 } from "@/lib/analytics";
@@ -30,17 +29,6 @@ import { PayoutsView } from "./PayoutsView";
 import { HealthReportModal } from "./HealthReportModal";
 import { AveragesSection } from "./AveragesSection";
 
-const COMPARISON_LABEL: Record<RangePreset, string> = {
-  today: "vs yesterday",
-  "7d": "vs prev 7 days",
-  "30d": "vs prev 30 days",
-  "90d": "vs prev 90 days",
-  wtd: "vs last week",
-  mtd: "vs last month",
-  ytd: "vs prev period",
-  all: "all time",
-  contract: "since contract start",
-};
 
 type Metric = "commission" | "sales" | "count";
 
@@ -163,8 +151,6 @@ export function Dashboard() {
     const { start, end } = custom
       ? { start: customStart as string, end: customEnd as string }
       : rangeFor(preset);
-    const prev = custom ? previousRangeCustom(start, end) : previousRange(preset);
-    const comparisonLabel = custom ? "vs prev period" : COMPARISON_LABEL[preset];
     const periodLabel =
       !custom && preset === "all"
         ? "All time"
@@ -177,9 +163,6 @@ export function Dashboard() {
     const inRange = (r: { date: string }) => r.date >= start && r.date <= end;
     const inWindow = active.filter(inRange); // approved + pending only
     const cur = totals(inWindow);
-    const prevTotals = prev
-      ? totals(active.filter((r) => r.date >= prev.start && r.date <= prev.end))
-      : null;
 
     // Status breakdown for the selected window (includes declined).
     const windowAll = all.filter(inRange);
@@ -228,16 +211,33 @@ export function Dashboard() {
       }
     }
 
+    // KPI % = this period's per-day rate vs the average day over the 30 days
+    // BEFORE the period (Dane, 2026-10-08: "vs yesterday" swung wildly and a
+    // part-finished today always looked down). Single day compares its total;
+    // multi-day compares its per-day average. No comparison for All time /
+    // Since contract (there's no meaningful "before").
+    const noCompare = !custom && (preset === "all" || preset === "contract");
+    const baseStart = addDays(start, -30);
+    const baseEnd = addDays(start, -1);
+    const base = noCompare ? null : totals(active.filter((r) => r.date >= baseStart && r.date <= baseEnd));
+    const baselinePerDay = base ? { sales: base.sales / 30, commission: base.commission / 30, count: base.count / 30 } : null;
+    const currentPerDay =
+      start === end
+        ? { sales: cur.sales, commission: cur.commission, count: cur.count }
+        : { sales: avg.salePerDay, commission: avg.commPerDay, count: cur.count / avg.days };
+    const comparisonLabel = noCompare ? (contractMode ? "since contract start" : "all time") : start === end ? "vs avg day" : "vs 30-day avg";
+
     return {
       cur,
       avg,
+      currentPerDay,
+      baselinePerDay,
       // Per-day averages only mean something across more than one day.
       multiDay: start !== end,
       pace,
       statusTotals,
       dow: byDayOfWeek(inWindow), // weekday averages for the selected period
       periodLabel,
-      prevTotals,
       comparisonLabel,
       nonDate: active, // trend derives from this (declined excluded)
       brands: byBrandDetailed(windowAll),
@@ -482,8 +482,8 @@ export function Dashboard() {
                   label="Total Sales"
                   value={vals[0]}
                   perDay={view.multiDay ? usd(view.avg.salePerDay) : undefined}
-                  current={view.cur.sales}
-                  previous={view.prevTotals?.sales ?? null}
+                  current={view.currentPerDay.sales}
+                  previous={view.baselinePerDay?.sales ?? null}
                   comparisonLabel={view.comparisonLabel}
                   valueSize={kpiSize}
                 />
@@ -491,8 +491,8 @@ export function Dashboard() {
                   label="Total Commission"
                   value={vals[1]}
                   perDay={view.multiDay ? usd(view.avg.commPerDay) : undefined}
-                  current={view.cur.commission}
-                  previous={view.prevTotals?.commission ?? null}
+                  current={view.currentPerDay.commission}
+                  previous={view.baselinePerDay?.commission ?? null}
                   comparisonLabel={view.comparisonLabel}
                   valueSize={kpiSize}
                 />
@@ -500,8 +500,8 @@ export function Dashboard() {
                   label="# of Sales"
                   value={vals[2]}
                   perDay={view.multiDay ? (view.cur.count / view.avg.days).toFixed(1) : undefined}
-                  current={view.cur.count}
-                  previous={view.prevTotals?.count ?? null}
+                  current={view.currentPerDay.count}
+                  previous={view.baselinePerDay?.count ?? null}
                   comparisonLabel={view.comparisonLabel}
                   valueSize={kpiSize}
                 />
