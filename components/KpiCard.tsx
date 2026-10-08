@@ -26,7 +26,7 @@ export function KpiCard({ label, value, current, previous, comparisonLabel, valu
       <div className={`mt-0.5 font-semibold tabular-nums sm:mt-1 ${valueSize}`}>{value}</div>
       {perDay && (
         <div className="mt-0.5 truncate text-[11px] font-medium tabular-nums text-text-secondary sm:text-sm">
-          {perDay} <span className="font-normal text-text-muted">/ day avg</span>
+          {perDay} <span className="font-normal text-text-muted">/ day avg this period</span>
         </div>
       )}
       {pct === null ? (
