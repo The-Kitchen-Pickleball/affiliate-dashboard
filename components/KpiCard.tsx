@@ -6,6 +6,8 @@ interface Props {
   current: number;
   previous: number | null;
   comparisonLabel: string;
+  /** Short label for phones, where three cards share one row (must fit on one line). */
+  comparisonLabelShort?: string;
   /** Shared value font size (Tailwind classes) so all KPI cards match, sized by
    *  the Dashboard to fit the longest of the three values. */
   valueSize: string;
@@ -13,19 +15,20 @@ interface Props {
   perDay?: string;
 }
 
-export function KpiCard({ label, value, current, previous, comparisonLabel, valueSize, perDay }: Props) {
+export function KpiCard({ label, value, current, previous, comparisonLabel, comparisonLabelShort, valueSize, perDay }: Props) {
   const pct = previous === null ? null : pctChange(current, previous);
   const up = pct !== null && pct > 0;
   const down = pct !== null && pct < 0;
   const change =
     pct === null ? null : (
-      <span className="inline-flex flex-wrap items-center gap-x-1 text-[10px] sm:text-xs">
+      <span className="inline-flex min-w-0 items-center gap-x-1 whitespace-nowrap text-[10px] sm:text-xs">
         <span
           className="inline-flex items-center gap-0.5 font-medium tabular-nums"
           style={{ color: up ? "var(--good)" : down ? "var(--bad)" : "var(--text-muted)" }}
         >
           {up ? "▲" : down ? "▼" : "—"} {Math.abs(pct).toFixed(1)}%
         </span>
+        {comparisonLabelShort && <span className="min-w-0 truncate text-[9px] text-text-muted sm:hidden">{comparisonLabelShort}</span>}
         <span className="hidden text-text-muted sm:inline">{comparisonLabel}</span>
       </span>
     );
@@ -48,7 +51,7 @@ export function KpiCard({ label, value, current, previous, comparisonLabel, valu
       ) : pct === null ? (
         <div className="mt-0.5 truncate text-[10px] text-text-muted sm:text-xs">{comparisonLabel}</div>
       ) : (
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1 text-[10px] sm:mt-1 sm:text-xs">{change}</div>
+        <div className="mt-0.5 flex items-center overflow-hidden text-[10px] sm:mt-1 sm:text-xs">{change}</div>
       )}
     </div>
   );

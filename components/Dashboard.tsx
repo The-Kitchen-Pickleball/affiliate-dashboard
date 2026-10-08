@@ -487,6 +487,7 @@ export function Dashboard() {
                   current={view.currentPerDay.sales}
                   previous={view.baselinePerDay?.sales ?? null}
                   comparisonLabel={view.comparisonLabel}
+                  comparisonLabelShort={view.comparisonLabel ? "vs 30d avg" : undefined}
                   valueSize={kpiSize}
                 />
                 <KpiCard
@@ -496,6 +497,7 @@ export function Dashboard() {
                   current={view.currentPerDay.commission}
                   previous={view.baselinePerDay?.commission ?? null}
                   comparisonLabel={view.comparisonLabel}
+                  comparisonLabelShort={view.comparisonLabel ? "vs 30d avg" : undefined}
                   valueSize={kpiSize}
                 />
                 <KpiCard
@@ -505,6 +507,7 @@ export function Dashboard() {
                   current={view.currentPerDay.count}
                   previous={view.baselinePerDay?.count ?? null}
                   comparisonLabel={view.comparisonLabel}
+                  comparisonLabelShort={view.comparisonLabel ? "vs 30d avg" : undefined}
                   valueSize={kpiSize}
                 />
               </div>
