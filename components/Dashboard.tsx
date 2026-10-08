@@ -216,7 +216,9 @@ export function Dashboard() {
     // part-finished today always looked down). Single day compares its total;
     // multi-day compares its per-day average. No comparison for All time /
     // Since contract (there's no meaningful "before").
-    const noCompare = !custom && (preset === "all" || preset === "contract");
+    // Only a single day gets a % (Dane, 2026-10-08): for a range, the total + per-day
+    // average already answer "what happened"; a comparison needed explaining.
+    const noCompare = start !== end || (!custom && (preset === "all" || preset === "contract"));
     const baseStart = addDays(start, -30);
     const baseEnd = addDays(start, -1);
     const base = noCompare ? null : totals(active.filter((r) => r.date >= baseStart && r.date <= baseEnd));
@@ -225,7 +227,7 @@ export function Dashboard() {
       start === end
         ? { sales: cur.sales, commission: cur.commission, count: cur.count }
         : { sales: avg.salePerDay, commission: avg.commPerDay, count: cur.count / avg.days };
-    const comparisonLabel = noCompare ? (contractMode ? "since contract start" : "all time") : start === end ? "vs avg day, past 30 days" : "vs prior 30 days";
+    const comparisonLabel = noCompare ? "" : "vs avg day, past 30 days";
 
     return {
       cur,
