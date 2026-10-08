@@ -29,6 +29,8 @@ export interface HealthCheck {
    *  errors can never be dismissed. Changes if the underlying entities change, so a
    *  dismissed alert reappears when it's actually a new problem. */
   dismissId?: string;
+  /** Optional per-entity breakdown, rendered as a list with the name in bold. */
+  items?: { name: string; note: string }[];
 }
 
 /** Per-brand payout state, from the Audit Aggregates tab. Only brands whose

@@ -57,6 +57,16 @@ export function HealthReportModal({
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{c.label}</div>
                   <div className="text-xs text-text-secondary">{c.detail}</div>
+                  {c.items && c.items.length > 0 && (
+                    <ul className="mt-1.5 flex flex-col gap-1">
+                      {c.items.map((it, j) => (
+                        <li key={j} className="text-xs leading-snug text-text-secondary">
+                          <span className="font-semibold text-text">{it.name}</span>
+                          <span className="text-text-muted"> — {it.note}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {c.dismissId && (
                     <button
                       onClick={() => onToggleDismiss(c.dismissId!, !dis)}

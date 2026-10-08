@@ -194,6 +194,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const checks = computeChecks({
     lastScrape, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
     rpmTrack, auditVals, brandStatusVals, futureDated, badTimestamp, duplicateIds, orderSales,
+    brandNames: Object.fromEntries(rows.map((r) => [r.advertiserId, r.advertiser])),
     since30: addDays(today, -30),
   });
 
@@ -226,6 +227,14 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   return { rows, lastScrape, checks, payouts };
 }
 
+/** "2026-10-07 23:45:12" → "Oct 7, 11:45 PM" (already Central wall-clock). */
+function friendlyTime(s: string): string {
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if (!m) return s;
+  const [, y, mo, d, hh, mm] = m.map(Number);
+  return new Date(y, mo - 1, d, hh, mm).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+}
+
 /** The morning health check — the same things I verify by hand, on demand. */
 function computeChecks(o: {
   lastScrape: string | null;
@@ -238,6 +247,7 @@ function computeChecks(o: {
   auditVals: string[][];
   brandStatusVals: string[][];
   orderSales: Map<string, { date: string; commission: number }[]>;
+  brandNames: Record<string, string>;
   since30: string;
   futureDated: number;
   badTimestamp: number;
@@ -375,20 +385,21 @@ function computeChecks(o: {
     };
     for (const r of o.brandStatusVals.slice(1)) note(String(r[0] ?? "").toLowerCase(), String(r[1] ?? ""));
     for (const r of o.auditVals.slice(1)) note(String(r[0] ?? "").toLowerCase(), String(r[6] ?? ""));
-    const behind: string[] = [];
+    const behind: { name: string; note: string }[] = [];
     for (const [id, at] of latest) {
       const hoursBehind = (lastRun - Date.parse(at.replace(" ", "T"))) / 3_600_000;
       if (Number.isFinite(hoursBehind) && hoursBehind > 3) {
         const age = hoursBehind >= 48 ? `${Math.round(hoursBehind / 24)} days` : `${Math.round(hoursBehind)}h`;
-        behind.push(`${id} (last updated ${at.slice(0, 16)}, ${age} ago)`);
+        behind.push({ name: o.brandNames[id] || id, note: `last updated ${friendlyTime(at)} · ${age} ago` });
       }
     }
     checks.push({
       label: "Every brand is updating",
       status: behind.length ? "error" : "ok",
       detail: behind.length
-        ? `${behind.length} brand${behind.length > 1 ? "s are" : " is"} failing to update — usually a login problem. Their numbers are frozen until fixed: ${behind.join("; ")}.`
+        ? `${behind.length} brand${behind.length > 1 ? "s aren't" : " isn't"} updating — usually a login problem. Their numbers are frozen until it's fixed:`
         : `All ${latest.size} monitored brands updated in the latest scrape.`,
+      items: behind.length ? behind : undefined,
     });
   }
 
@@ -399,13 +410,13 @@ function computeChecks(o: {
   //     other check missed (its own count matched the platform's). Looks at the
   //     last 30 days so a settled historical oddity doesn't alarm forever.
   {
-    const dups: string[] = [];
+    const dups: { name: string; note: string }[] = [];
     const dupKeys: string[] = [];
     for (const [key, sales] of o.orderSales) {
       if (sales.length < 2 || !sales.some((x) => x.date >= o.since30)) continue;
       const [brand, order] = key.split("|");
       const extra = sales.reduce((s2, x) => s2 + x.commission, 0) - Math.max(...sales.map((x) => x.commission));
-      dups.push(`${brand} order ${order} ×${sales.length} (${sales.map((x) => x.date.slice(5)).join(", ")}; up to ${usd(extra)} extra)`);
+      dups.push({ name: `${o.brandNames[brand] || brand} · order ${order}`, note: `counted ${sales.length}× (${sales.map((x) => x.date.slice(5)).join(", ")}) — up to ${usd(extra)} extra` });
       dupKeys.push(key);
     }
     checks.push({
@@ -413,8 +424,9 @@ function computeChecks(o: {
       status: dups.length ? "warn" : "ok",
       dismissId: dups.length ? `dups:${dupKeys.sort().join(",")}` : undefined,
       detail: dups.length
-        ? `The same order shows up as more than one sale — the totals may be inflated: ${dups.join("; ")}.`
+        ? "The same order shows up as more than one sale, so these totals may be inflated:"
         : "Every order number appears once per brand (last 30 days).",
+      items: dups.length ? dups : undefined,
     });
   }
 
