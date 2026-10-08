@@ -17,6 +17,18 @@ export function KpiCard({ label, value, current, previous, comparisonLabel, valu
   const pct = previous === null ? null : pctChange(current, previous);
   const up = pct !== null && pct > 0;
   const down = pct !== null && pct < 0;
+  const change =
+    pct === null ? null : (
+      <span className="inline-flex flex-wrap items-center gap-x-1 text-[10px] sm:text-xs">
+        <span
+          className="inline-flex items-center gap-0.5 font-medium tabular-nums"
+          style={{ color: up ? "var(--good)" : down ? "var(--bad)" : "var(--text-muted)" }}
+        >
+          {up ? "▲" : down ? "▼" : "—"} {Math.abs(pct).toFixed(1)}%
+        </span>
+        <span className="hidden text-text-muted sm:inline">{comparisonLabel}</span>
+      </span>
+    );
 
   return (
     <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
@@ -24,23 +36,19 @@ export function KpiCard({ label, value, current, previous, comparisonLabel, valu
         {label}
       </div>
       <div className={`mt-0.5 font-semibold tabular-nums sm:mt-1 ${valueSize}`}>{value}</div>
-      {perDay && (
-        <div className="mt-0.5 truncate text-[11px] font-medium tabular-nums text-text-secondary sm:text-sm">
-          {perDay} <span className="font-normal text-text-muted">/ day avg this period</span>
+      {/* The % compares a per-day rate with the 30-day average day, so on a
+          multi-day range it sits on the per-day line (comparing like with like);
+          on a single day the total IS the day, so it sits under the total. */}
+      {perDay ? (
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums sm:text-sm">
+          <span className="font-medium text-text-secondary">{perDay}</span>
+          <span className="text-text-muted">/ day avg</span>
+          {change}
         </div>
-      )}
-      {pct === null ? (
+      ) : pct === null ? (
         <div className="mt-0.5 truncate text-[10px] text-text-muted sm:text-xs">{comparisonLabel}</div>
       ) : (
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1 text-[10px] sm:mt-1 sm:text-xs">
-          <span
-            className="inline-flex items-center gap-0.5 font-medium tabular-nums"
-            style={{ color: up ? "var(--good)" : down ? "var(--bad)" : "var(--text-muted)" }}
-          >
-            {up ? "▲" : down ? "▼" : "—"} {Math.abs(pct).toFixed(1)}%
-          </span>
-          <span className="hidden text-text-muted sm:inline">{comparisonLabel}</span>
-        </div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-1 text-[10px] sm:mt-1 sm:text-xs">{change}</div>
       )}
     </div>
   );
