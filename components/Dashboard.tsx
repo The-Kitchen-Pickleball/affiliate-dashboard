@@ -558,7 +558,7 @@ export function Dashboard() {
           />
 
           {/* Averages — below the trend (per Dane), always expanded */}
-          {view.multiDay && <AveragesSection avg={view.avg} dow={view.dow} periodLabel={view.periodLabel} />}
+          {view.multiDay && <AveragesSection dow={view.dow} />}
         </div>
       )}
 

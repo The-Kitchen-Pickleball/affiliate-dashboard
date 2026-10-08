@@ -5,27 +5,11 @@ import type { DowAgg } from "@/lib/analytics";
 import { usd } from "@/lib/format";
 import { BRAND } from "@/lib/theme";
 
-interface Avg {
-  salePerOrder: number;
-  commPerOrder: number;
-  salePerDay: number;
-  commPerDay: number;
-  days: number;
-}
-
 type DowMetric = "avgComm" | "avgSale";
 
 /** Weekday breakdown for the selected (multi-day) period, collapsed by default.
  *  The per-day averages themselves now sit on the top KPI cards. */
-export function AveragesSection({
-  avg,
-  dow,
-  periodLabel,
-}: {
-  avg: Avg;
-  dow: DowAgg[];
-  periodLabel: string;
-}) {
+export function AveragesSection({ dow }: { dow: DowAgg[] }) {
   const [dowMetric, setDowMetric] = useState<DowMetric>("avgComm");
   const [open, setOpen] = useState(false);
 
@@ -38,14 +22,12 @@ export function AveragesSection({
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={`flex w-full flex-wrap items-baseline gap-x-2 px-4 py-3 text-left hover:bg-surface-2 ${open ? "border-b border-border" : ""}`}
+        className={`flex w-full items-center justify-between px-4 py-3 text-left hover:bg-surface-2 ${open ? "border-b border-border" : ""}`}
       >
         <h2 className="text-sm font-semibold text-text-secondary">Average by day of week</h2>
-        <span className="text-xs text-text-muted">· {periodLabel} · {avg.days} day{avg.days === 1 ? "" : "s"}</span>
-        {!open && hasDow && best[dowMetric] > 0 && (
-          <span className="text-xs text-text-muted">· best: <span className="font-medium text-text-secondary">{best.label}</span></span>
-        )}
-        <span className="ml-auto text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
+        <span className="text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>
+          ▾
+        </span>
       </button>
 
       {open && (
