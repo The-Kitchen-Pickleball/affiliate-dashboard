@@ -225,7 +225,7 @@ export function Dashboard() {
       start === end
         ? { sales: cur.sales, commission: cur.commission, count: cur.count }
         : { sales: avg.salePerDay, commission: avg.commPerDay, count: cur.count / avg.days };
-    const comparisonLabel = noCompare ? (contractMode ? "since contract start" : "all time") : start === end ? "vs avg day" : "vs 30-day avg";
+    const comparisonLabel = noCompare ? (contractMode ? "since contract start" : "all time") : start === end ? "vs avg day, past 30 days" : "vs avg day, prior 30 days";
 
     return {
       cur,
