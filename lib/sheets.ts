@@ -451,5 +451,16 @@ function computeChecks(o: {
     detail: problems.length ? problems.join("; ") : "No future dates, bad timestamps, or duplicate IDs.",
   });
 
-  return checks;
+  // Labels above read as the passing state ("Every brand is updating"). When a
+  // check fails, title it by the problem instead so the alert reads naturally.
+  const PROBLEM_LABELS: Record<string, string> = {
+    "Scraper is running": "Scraper has stopped",
+    "RPM matches the platform": "RPM doesn't match the platform",
+    "RPM is updating": "RPM isn't updating",
+    "Brands match their platforms": "Brands don't match their platforms",
+    "Every brand is updating": "Brands not updating",
+    "No order counted twice": "Orders counted twice",
+    "No data anomalies": "Data problems found",
+  };
+  return checks.map((c) => (c.status !== "ok" && PROBLEM_LABELS[c.label] ? { ...c, label: PROBLEM_LABELS[c.label] } : c));
 }
