@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ApiResponse, Status } from "@/lib/types";
 import type { RangePreset } from "@/lib/analytics";
+import { CONTRACT_STARTS } from "@/lib/brandProfiles";
 import {
   applyNonDateFilters,
   byBrandDetailed,
@@ -38,6 +39,7 @@ const COMPARISON_LABEL: Record<RangePreset, string> = {
   mtd: "vs last month",
   ytd: "vs prev period",
   all: "all time",
+  contract: "since contract start",
 };
 
 type Metric = "commission" | "sales" | "count";
@@ -141,7 +143,16 @@ export function Dashboard() {
 
   const view = useMemo(() => {
     if (!data) return null;
-    const all = applyNonDateFilters(data.rows, filters); // every status
+    const allRows = applyNonDateFilters(data.rows, filters); // every status
+    // "Since contract": keep each brand's rows from ITS contract start onward;
+    // brands with no contract on file (commission-only) drop out of this view.
+    const contractMode = preset === "contract" && !(customStart && customEnd);
+    const all = contractMode
+      ? allRows.filter((r) => {
+          const s = CONTRACT_STARTS[r.advertiserId];
+          return Boolean(s) && r.date >= s;
+        })
+      : allRows;
     // Declined commissions were rejected by the platform — exclude them from all
     // headline numbers, brand table, trend, and averages. They're only surfaced
     // in the status breakdown below.
@@ -157,6 +168,8 @@ export function Dashboard() {
     const periodLabel =
       !custom && preset === "all"
         ? "All time"
+        : contractMode
+          ? "Since contract start"
         : start === end
           ? shortDate(start)
           : `${shortDate(start)} – ${shortDate(end)}`;

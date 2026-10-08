@@ -27,6 +27,7 @@ const TO_DATE: { key: RangePreset; label: string }[] = [
   { key: "mtd", label: "Month to date" },
   { key: "ytd", label: "Year to date" },
   { key: "all", label: "All time" },
+  { key: "contract", label: "Since contract start" },
 ];
 const LABELS: Record<RangePreset, string> = {
   today: "Today",
@@ -37,6 +38,7 @@ const LABELS: Record<RangePreset, string> = {
   mtd: "Month to date",
   ytd: "Year to date",
   all: "All time",
+  contract: "Since contract start",
 };
 
 const iso = (d: Date) => format(d, "yyyy-MM-dd");

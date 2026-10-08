@@ -1,6 +1,6 @@
 import type { Row, Status } from "./types";
 
-export type RangePreset = "today" | "7d" | "30d" | "90d" | "wtd" | "mtd" | "ytd" | "all";
+export type RangePreset = "today" | "7d" | "30d" | "90d" | "wtd" | "mtd" | "ytd" | "all" | "contract";
 
 export interface Filters {
   preset: RangePreset;
@@ -48,6 +48,7 @@ export function rangeFor(preset: RangePreset): { start: string; end: string } {
     case "ytd":
       return { start: `${end.slice(0, 4)}-01-01`, end };
     case "all":
+    case "contract": // per-brand start applied in Dashboard (CONTRACT_STARTS)
       return { start: "2000-01-01", end };
   }
 }
@@ -61,7 +62,7 @@ export function lastNDaysRange(n: number): { start: string; end: string } {
 
 /** The immediately-preceding window of equal length, for comparison %. */
 export function previousRange(preset: RangePreset): { start: string; end: string } | null {
-  if (preset === "all") return null;
+  if (preset === "all" || preset === "contract") return null;
   const { start, end } = rangeFor(preset);
   const lenDays =
     (Date.parse(end) - Date.parse(start)) / 86_400_000 + 1;

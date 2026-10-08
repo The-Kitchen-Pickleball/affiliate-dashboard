@@ -16,6 +16,7 @@ const PRESETS: { key: RangePreset; label: string }[] = [
   { key: "mtd", label: "MTD" },
   { key: "ytd", label: "YTD" },
   { key: "all", label: "All time" },
+  { key: "contract", label: "Since contract" },
 ];
 
 interface Props {

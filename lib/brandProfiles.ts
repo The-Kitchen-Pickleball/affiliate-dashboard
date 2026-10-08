@@ -76,3 +76,33 @@ export const BRAND_PROFILES: Record<string, BrandProfile> = {
 export function getBrandProfile(advertiserId: string): BrandProfile | undefined {
   return BRAND_PROFILES[advertiserId.toLowerCase()];
 }
+
+/**
+ * Contract start date (YYYY-MM-DD) per advertiser_id, for the "Since contract"
+ * date filter. Source: "Start/End" on the Notion **Partners** database
+ * (collection://31c4b384-8bfc-80ff-9792-000bad0b96f0), pulled 2026-10-08.
+ * Brands with no contract there (commission-only affiliates) are absent and
+ * drop out of the "Since contract" view. To refresh: re-query that DB.
+ */
+export const CONTRACT_STARTS: Record<string, string> = {
+  joola: "2025-02-01",
+  "joola-bundles": "2025-02-01", // JOOLA's own-store bundle sales — same partnership
+  engage: "2025-11-19",
+  "engage-legacy": "2025-11-19", // pre-SocialSnowball Engage rows (Affiliatly)
+  udrippin: "2025-09-01",
+  "11six24": "2026-03-01",
+  dominator: "2026-03-01",
+  paddletek: "2026-03-08",
+  proton: "2026-04-30",
+  holbrook: "2026-05-15",
+  "warping-point": "2026-06-10",
+  slamit: "2026-07-03",
+  flik: "2026-07-13",
+  daps: "2026-07-23",
+  pickleballgetaways: "2026-07-23",
+  kitchenblockers: "2026-08-06",
+  thrive: "2026-09-15",
+  tonyroig: "2026-09-25",
+  honolulu: "2026-10-06",
+  sixzero: "2026-10-06",
+};
