@@ -15,8 +15,8 @@ interface Avg {
 
 type DowMetric = "avgComm" | "avgSale";
 
-/** Averages for the currently-selected period. Prominent: per-day averages.
- *  Secondary: a compact by-weekday breakdown. Always expanded (lives at the bottom). */
+/** Weekday breakdown for the selected (multi-day) period, collapsed by default.
+ *  The per-day averages themselves now sit on the top KPI cards. */
 export function AveragesSection({
   avg,
   dow,
@@ -27,12 +27,7 @@ export function AveragesSection({
   periodLabel: string;
 }) {
   const [dowMetric, setDowMetric] = useState<DowMetric>("avgComm");
-  const [open, setOpen] = useState(true);
-
-  const stats = [
-    { label: "Avg sale / day", value: usd(avg.salePerDay) },
-    { label: "Avg comm. / day", value: usd(avg.commPerDay) },
-  ];
+  const [open, setOpen] = useState(false);
 
   const max = Math.max(...dow.map((d) => d[dowMetric]), 0.0001);
   const best = dow.reduce((b, d) => (d[dowMetric] > b[dowMetric] ? d : b), dow[0]);
@@ -45,30 +40,18 @@ export function AveragesSection({
         aria-expanded={open}
         className={`flex w-full flex-wrap items-baseline gap-x-2 px-4 py-3 text-left hover:bg-surface-2 ${open ? "border-b border-border" : ""}`}
       >
-        <h2 className="text-sm font-semibold text-text-secondary">Averages this period</h2>
-        <span className="text-xs text-text-muted">· {periodLabel}</span>
+        <h2 className="text-sm font-semibold text-text-secondary">Average by day of week</h2>
+        <span className="text-xs text-text-muted">· {periodLabel} · {avg.days} day{avg.days === 1 ? "" : "s"}</span>
+        {!open && hasDow && best[dowMetric] > 0 && (
+          <span className="text-xs text-text-muted">· best: <span className="font-medium text-text-secondary">{best.label}</span></span>
+        )}
         <span className="ml-auto text-xs text-text-muted transition-transform" style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
       </button>
 
       {open && (
       <div className="px-4 py-4">
-        {/* Prominent: per-day averages */}
-        <div className="flex flex-wrap gap-x-10 gap-y-3">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <div className="text-[11px] uppercase tracking-wide text-text-muted">{s.label}</div>
-              <div className="mt-0.5 text-base font-semibold tabular-nums sm:text-lg">{s.value}</div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-1.5 text-xs text-text-muted">
-          over {avg.days} day{avg.days === 1 ? "" : "s"} in this range
-        </p>
-
-        {/* Secondary: which weekdays sell biggest (compact, muted) */}
-        <div className="mt-4 border-t border-border pt-3">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-medium text-text-secondary">Average by day of week</span>
+        <div>
+          <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
             <div className="flex gap-1">
               {(["avgComm", "avgSale"] as DowMetric[]).map((m) => (
                 <button

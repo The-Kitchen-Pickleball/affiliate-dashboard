@@ -231,6 +231,8 @@ export function Dashboard() {
     return {
       cur,
       avg,
+      // Per-day averages only mean something across more than one day.
+      multiDay: start !== end,
       pace,
       statusTotals,
       dow: byDayOfWeek(inWindow), // weekday averages for the selected period
@@ -479,6 +481,7 @@ export function Dashboard() {
                 <KpiCard
                   label="Total Sales"
                   value={vals[0]}
+                  perDay={view.multiDay ? usd(view.avg.salePerDay) : undefined}
                   current={view.cur.sales}
                   previous={view.prevTotals?.sales ?? null}
                   comparisonLabel={view.comparisonLabel}
@@ -487,6 +490,7 @@ export function Dashboard() {
                 <KpiCard
                   label="Total Commission"
                   value={vals[1]}
+                  perDay={view.multiDay ? usd(view.avg.commPerDay) : undefined}
                   current={view.cur.commission}
                   previous={view.prevTotals?.commission ?? null}
                   comparisonLabel={view.comparisonLabel}
@@ -495,6 +499,7 @@ export function Dashboard() {
                 <KpiCard
                   label="# of Sales"
                   value={vals[2]}
+                  perDay={view.multiDay ? (view.cur.count / view.avg.days).toFixed(1) : undefined}
                   current={view.cur.count}
                   previous={view.prevTotals?.count ?? null}
                   comparisonLabel={view.comparisonLabel}
@@ -548,7 +553,7 @@ export function Dashboard() {
           />
 
           {/* Averages — below the trend (per Dane), always expanded */}
-          <AveragesSection avg={view.avg} dow={view.dow} periodLabel={view.periodLabel} />
+          {view.multiDay && <AveragesSection avg={view.avg} dow={view.dow} periodLabel={view.periodLabel} />}
         </div>
       )}
 
