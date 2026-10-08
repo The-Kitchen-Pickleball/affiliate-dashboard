@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { HealthCheck } from "@/lib/types";
 import { heartbeatLabel } from "@/lib/format";
 
@@ -32,6 +32,12 @@ export function HealthReportModal({
   const isDismissed = (c: HealthCheck) => Boolean(c.dismissId && dismissed.has(c.dismissId));
   const active = checks.filter((c) => c.status !== "ok" && !isDismissed(c));
   const worst = active.some((c) => c.status === "error") ? "error" : active.length ? "warn" : "ok";
+  // Problems first (errors, then warnings); passing + dismissed checks collapse
+  // into one "N other checks passed" line so the alert is the first thing you see.
+  const rank = (c: HealthCheck) => (isDismissed(c) || c.status === "ok" ? 2 : c.status === "error" ? 0 : 1);
+  const problems = checks.filter((c) => rank(c) < 2).sort((a, b) => rank(a) - rank(b));
+  const passing = checks.filter((c) => rank(c) === 2);
+  const [showPassing, setShowPassing] = useState(false);
   const headline =
     worst === "ok" ? "Everything looks good" : worst === "warn" ? "A couple things to review" : "Something needs attention";
 
@@ -48,7 +54,7 @@ export function HealthReportModal({
         {lastScrape && <p className="mb-4 text-xs text-text-muted">Data last updated {heartbeatLabel(lastScrape)}</p>}
 
         <div className="flex flex-col gap-2">
-          {checks.map((c, i) => {
+          {[...problems, ...(showPassing ? passing : [])].map((c, i) => {
             const dis = isDismissed(c);
             const shown = dis ? "ok" : c.status; // a dismissed warning reads as resolved
             return (
@@ -79,6 +85,18 @@ export function HealthReportModal({
               </div>
             );
           })}
+          {passing.length > 0 && (
+            <button
+              onClick={() => setShowPassing((v) => !v)}
+              className="flex items-center gap-2.5 rounded-lg border border-border p-3 text-left text-sm text-text-secondary hover:bg-surface-2"
+            >
+              <span aria-hidden style={{ color: COLOR.ok }}>{ICON.ok}</span>
+              <span className="flex-1">
+                {problems.length ? `${passing.length} other check${passing.length > 1 ? "s" : ""} passed` : `All ${passing.length} checks passed`}
+              </span>
+              <span className="text-xs text-text-muted">{showPassing ? "Hide" : "Show"}</span>
+            </button>
+          )}
         </div>
 
         <p className="mt-4 text-[11px] text-text-muted">
