@@ -141,10 +141,20 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     });
   }
 
-  const lastScrape = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
+  const heartbeat = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const brandStatusVals = (brandStatusRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
+  // "Updated …" = when data last landed, not when a run last finished end-to-end.
+  // The Status heartbeat is only written when a whole run succeeds, so a run that
+  // times out partway (e.g. a mass UpPromote re-login, 2026-10-08) left the header
+  // saying "8:46am" while brands kept updating until 10:44. Use the newest of the
+  // heartbeat and every brand's Brand Status stamp; per-brand failures are caught
+  // by the "Every brand is updating" check, which compares against this.
+  const lastScrape = [heartbeat, ...brandStatusVals.slice(1).map((r) => r[1])]
+    .filter((t): t is string => !!t && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(t))
+    .sort()
+    .pop() ?? null;
 
   // Payout tracker: one row per brand, covering EVERY brand we have data for.
   // A brand is "tracked" only when its platform reports a real PAID history
