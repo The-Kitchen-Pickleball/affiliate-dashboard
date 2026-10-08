@@ -55,6 +55,7 @@ export const BRAND_PROFILES: Record<string, BrandProfile> = {
   "joola-bundles": { platform: "Shopify (direct bundles)", commissionPct: null, code: "NA", discount: "", storeLink: "https://joola-usa.myshopify.com?bg_ref=ibGahSCAYb", connected: "Connected", notes: "Direct JOOLA-bundle store sales; 'commission' = sale − Shopify fees (2.9% + $0.30)" },
   luzz: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/010661-db/login", commissionPct: 0.2, code: "KITCHEN", discount: "15% off", storeLink: "https://luzzpickleball.com?sca_ref=10189049.OP2LCNcyfP", connected: "Connected" },
   mark: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/495311-2/login", commissionPct: 0.1, code: "KITCHEN", discount: "10% off", connected: "Connected" },
+  nox: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/nox-usa/login", commissionPct: 0.15, code: "KITCHEN", discount: "12% off", connected: "Connected" },
   neonic: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/neonic-pickleball/login", commissionPct: 0.1, code: "KITCHEN", discount: "10% off", storeLink: "https://neonicpickleball.com/?sca_ref=10905188.LKXfrcCWu5N", connected: "Connected" },
   paddletek: { platform: "Shortly", platformUrl: "https://shortly.link/influencer/dashboard", commissionPct: 0.2, code: "KITCHEN", discount: "10% off", storeLink: "https://www.paddletek.com/TheKitchen", connected: "Connected" },
   pickleballapes: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/pickleballapes/login", commissionPct: 0.4, code: "KITCHEN", discount: "10% off", storeLink: "https://www.pickleballapes.com?sca_ref=10608763.F2hARHEsYHG3Rmz1", connected: "Connected" },
@@ -103,6 +104,7 @@ export const CONTRACT_STARTS: Record<string, string> = {
   kitchenblockers: "2026-08-06",
   thrive: "2026-09-15",
   tonyroig: "2026-09-25",
+  nox: "2026-10-01",
   honolulu: "2026-10-06",
   sixzero: "2026-10-06",
 };
