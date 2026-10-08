@@ -10,6 +10,9 @@ const SHEET_ID = process.env.GOOGLE_SHEET_ID!;
 const COMMISSIONS_TAB = "Comissions"; // sic — real tab name has one M
 const STATUS_TAB = "Status";
 const RPM_TRACK_TAB = "RPM Commissions"; // RPM platform cumulative lives here
+// Brands whose order_ref column holds something other than an order number
+// (RPM: a sales count per delta row; HEAD: a landing-page URL).
+const ORDER_REF_NOT_AN_ORDER = new Set(["rpm-pickleball", "head"]);
 const BRAND_STATUS_TAB = "Brand Status"; // per-brand last successful update (written by the scrapers' shared write paths)
 const AUDIT_TAB = "Audit Aggregates"; // per-brand platform totals (SocialSnowball etc.)
 
@@ -92,6 +95,8 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   let futureDated = 0;
   let badTimestamp = 0;
   let duplicateIds = 0;
+  // Positive, non-declined sales per brand+order number (see the duplicate-order check).
+  const orderSales = new Map<string, { date: string; commission: number }[]>();
 
   for (let i = 1; i < values.length; i++) {
     const r = values[i];
@@ -111,6 +116,11 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
     if (date >= recentStart && date <= today) brandRecent[advertiserId] = (brandRecent[advertiserId] || 0) + 1;
     if (date >= priorStart && date <= priorEnd) (brandPriorDays[advertiserId] ??= new Set()).add(date);
     if (date > today) futureDated++;
+    if (commission > 0 && st !== "declined" && ocRaw && !ORDER_REF_NOT_AN_ORDER.has(advertiserId)) {
+      const key = `${advertiserId}|${ocRaw}`;
+      if (!orderSales.has(key)) orderSales.set(key, []);
+      orderSales.get(key)!.push({ date, commission });
+    }
     if (!/^\d{4}-\d{2}-\d{2} ([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(datetime)) badTimestamp++;
     const tx = String(r[iTx] ?? "");
     if (tx) {
@@ -173,7 +183,8 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
 
   const checks = computeChecks({
     lastScrape, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
-    rpmTrack, auditVals, brandStatusVals, futureDated, badTimestamp, duplicateIds,
+    rpmTrack, auditVals, brandStatusVals, futureDated, badTimestamp, duplicateIds, orderSales,
+    since30: addDays(today, -30),
   });
 
   // RPM per-row order count — gentle, capped reconciliation. A commission-bearing
@@ -216,6 +227,8 @@ function computeChecks(o: {
   rpmTrack: string[][];
   auditVals: string[][];
   brandStatusVals: string[][];
+  orderSales: Map<string, { date: string; commission: number }[]>;
+  since30: string;
   futureDated: number;
   badTimestamp: number;
   duplicateIds: number;
@@ -366,6 +379,32 @@ function computeChecks(o: {
       detail: behind.length
         ? `${behind.length} brand${behind.length > 1 ? "s are" : " is"} failing to update — usually a login problem. Their numbers are frozen until fixed: ${behind.join("; ")}.`
         : `All ${latest.size} monitored brands updated in the latest scrape.`,
+    });
+  }
+
+  // 3c. Same order counted twice. Each sale should appear once per order number;
+  //     a refund is a separate NEGATIVE row, so it doesn't count here. On
+  //     2026-10-07 Current (Dominator) re-listed 5 old orders under new ids and
+  //     one new order twice — ~$2,250 of phantom commission on one day that every
+  //     other check missed (its own count matched the platform's). Looks at the
+  //     last 30 days so a settled historical oddity doesn't alarm forever.
+  {
+    const dups: string[] = [];
+    const dupKeys: string[] = [];
+    for (const [key, sales] of o.orderSales) {
+      if (sales.length < 2 || !sales.some((x) => x.date >= o.since30)) continue;
+      const [brand, order] = key.split("|");
+      const extra = sales.reduce((s2, x) => s2 + x.commission, 0) - Math.max(...sales.map((x) => x.commission));
+      dups.push(`${brand} order ${order} ×${sales.length} (${sales.map((x) => x.date.slice(5)).join(", ")}; up to ${usd(extra)} extra)`);
+      dupKeys.push(key);
+    }
+    checks.push({
+      label: "No order counted twice",
+      status: dups.length ? "warn" : "ok",
+      dismissId: dups.length ? `dups:${dupKeys.sort().join(",")}` : undefined,
+      detail: dups.length
+        ? `The same order shows up as more than one sale — the totals may be inflated: ${dups.join("; ")}.`
+        : "Every order number appears once per brand (last 30 days).",
     });
   }
 
