@@ -35,6 +35,7 @@ const LOGO_FILE: Record<string, string> = {
   gruvn: "gruvn.jpg",
   head: "head.jpg",
   holbrook: "holbrook.jpg",
+  honcho: "honcho.jpg",
   honolulu: "honolulu.jpg",
   joola: "joola.jpg",
   "joola-bundles": "joola.jpg",

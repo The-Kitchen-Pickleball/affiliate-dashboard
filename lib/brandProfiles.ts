@@ -50,6 +50,7 @@ export const BRAND_PROFILES: Record<string, BrandProfile> = {
   gruvn: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/gruvn/login", commissionPct: 0.2, code: "KITCHENPB", discount: "10% off", storeLink: "https://gruvn.co?sca_ref=10258590.e4hRYBKQIZhrJ", connected: "Connected" },
   head: { platform: "Awin", platformUrl: "https://ui.awin.com/idp/us/awin/login/prelogin?redirect=%2Flogin%3FnetworkGroup%3Dawin", commissionPct: 0.3, code: "KITCHEN", discount: "15% off", storeLink: "https://www.awin1.com/cread.php?awinmid=27978&awinaffid=2927569", connected: "Connected" },
   holbrook: { platform: "UpPromote", platformUrl: "https://ambassadors.holbrookpickleball.com/login", commissionPct: 0.15, code: "KITCHEN", discount: "15% off", storeLink: "https://holbrookpickleball.com/Kitchen", connected: "Connected" },
+  honcho: { platform: "Looker Studio report (Honcho)", platformUrl: "https://lookerstudio.google.com/reporting/51b6d2ef-d994-4b6f-a462-2c964191b338", commissionPct: 0.1, code: "KITCHEN", connected: "Connected", notes: "Summary-only report; Winter '26–27 backfilled at the season's average order" },
   honolulu: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/4009c8-2/login", commissionPct: 0.275, code: "KITCHEN", discount: "10% off", storeLink: "https://808pickle.com?sca_ref=10282613.wUHrpmxXWt", connected: "Connected" },
   joola: { platform: "BixGrow (Shopify)", platformUrl: "https://affiliate.joola.com/login", commissionPct: 0.15, code: "NA", discount: "", storeLink: "https://joola-usa.myshopify.com?bg_ref=ibGahSCAYb", connected: "Connected" },
   "joola-bundles": { platform: "Shopify (direct bundles)", commissionPct: null, code: "NA", discount: "", storeLink: "https://joola-usa.myshopify.com?bg_ref=ibGahSCAYb", connected: "Connected", notes: "Direct JOOLA-bundle store sales; 'commission' = sale − Shopify fees (2.9% + $0.30)" },
@@ -105,6 +106,19 @@ export const CONTRACT_STARTS: Record<string, string> = {
   thrive: "2026-09-15",
   tonyroig: "2026-09-25",
   nox: "2026-10-01",
+  honcho: "2026-03-16",
   honolulu: "2026-10-06",
   sixzero: "2026-10-06",
+};
+
+/**
+ * Named seasons per brand, shown as quick filters on that brand's page.
+ * A season runs from `start` through `end` (or today if still open).
+ * Honcho: seasons start when registration opens ("Reg Day 1" in their report).
+ * Fall '26 / Late-Spring '26 aren't listed — their report pages are broken
+ * ("Invalid filter") so we have neither dates nor numbers for them yet.
+ */
+export interface Season { label: string; start: string; end?: string }
+export const BRAND_SEASONS: Record<string, Season[]> = {
+  honcho: [{ label: "Winter '26–27", start: "2026-09-21" }],
 };

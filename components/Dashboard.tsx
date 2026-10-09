@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ApiResponse, Status } from "@/lib/types";
 import type { RangePreset } from "@/lib/analytics";
-import { CONTRACT_STARTS } from "@/lib/brandProfiles";
+import { CONTRACT_STARTS, BRAND_SEASONS } from "@/lib/brandProfiles";
 import {
   applyNonDateFilters,
   byBrandDetailed,
@@ -25,6 +25,7 @@ import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { BrandProfile } from "./BrandProfile";
+import { SeasonFilter } from "./SeasonFilter";
 import { PayoutsView } from "./PayoutsView";
 import { HealthReportModal } from "./HealthReportModal";
 import { AveragesSection } from "./AveragesSection";
@@ -472,6 +473,21 @@ export function Dashboard() {
         <div className="flex flex-col gap-5">
           {/* Brand detail: profile card (with its own back button), on a brand page */}
           {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
+          {brand && BRAND_SEASONS[brand] && (
+            <SeasonFilter
+              seasons={BRAND_SEASONS[brand]}
+              customStart={customStart}
+              customEnd={customEnd}
+              onPick={(s, e) => {
+                setCustomStart(s);
+                setCustomEnd(e);
+              }}
+              onClear={() => {
+                setCustomStart(null);
+                setCustomEnd(null);
+              }}
+            />
+          )}
 
           {/* KPIs — 3 across on every screen, compact on mobile. All three share
               one font size (kpiSize, hoisted above) picked to fit the longest
