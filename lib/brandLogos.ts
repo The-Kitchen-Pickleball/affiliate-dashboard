@@ -41,6 +41,7 @@ const LOGO_FILE: Record<string, string> = {
   kitchenblockers: "kitchen-blockers.jpg",
   luzz: "luzz.jpg",
   neonic: "neonic.jpg",
+  nox: "nox.jpg",
   paddletek: "paddletek.jpg",
   pickleballapes: "pickleball-apes.jpg",
   pickleballgetaways: "pickleball-getaways.jpg",
