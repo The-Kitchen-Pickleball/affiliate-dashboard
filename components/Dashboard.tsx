@@ -415,9 +415,9 @@ export function Dashboard() {
                   aria-hidden
                   tabIndex={-1}
                   onClick={() => setNavOpen(false)}
-                  className="fixed inset-0 z-10 cursor-default"
+                  className="fixed inset-0 z-40 cursor-default"
                 />
-                <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-border bg-surface-1 shadow-lg">
+                <div className="absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
                   {([
                     ["sales", "Sales"],
                     ["payouts", "Payouts"],

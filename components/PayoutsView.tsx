@@ -94,7 +94,7 @@ export function PayoutsView({
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-surface-1">
+    <section className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/* Header: what's owed / paid to date, + sort control */}
       <div className="border-b border-border px-4 py-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
