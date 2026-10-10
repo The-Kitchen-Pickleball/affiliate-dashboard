@@ -36,6 +36,12 @@ export async function middleware(req: NextRequest) {
   const social = process.env.SOCIAL_AUTH_HASH;
   if (social && req.cookies.get("ks_auth")?.value === social) return NextResponse.next();
 
+  // A fetch() can't use a redirect to the login page — it would try to parse the
+  // HTML as JSON ("Unexpected token <"). Say what actually happened instead.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Not signed in to the affiliate dashboard. Reload the page to sign in." }, { status: 401 });
+  }
+
   const url = req.nextUrl.clone();
   url.pathname = "/login";
   url.searchParams.set("from", pathname);
