@@ -374,7 +374,7 @@ export function Dashboard() {
             ))}
             {/* Other sections of dashboard.thekitchenpickle.com (kitchen-social app). */}
             {([
-              ["/", "Partners"],
+              ["/partners", "Partners"],
               ["/series", "Series"],
             ] as const).map(([href, label]) => (
               <a
@@ -433,7 +433,7 @@ export function Dashboard() {
                     </button>
                   ))}
                   {([
-                    ["/", "Partners"],
+                    ["/partners", "Partners"],
                     ["/series", "Series"],
                   ] as const).map(([href, label]) => (
                     <a
