@@ -70,6 +70,8 @@ export function Dashboard() {
   // Top-level tab: the date-filtered "Sales" dashboard, or the "Payouts" standing
   // (lifetime balances — kept separate because they don't respond to the date filter).
   const [tab, setTab] = useState<"sales" | "payouts">("sales");
+  // Payouts is still being built — warn every time someone opens it (Dane, 2026-10-10).
+  const [payoutsNotice, setPayoutsNotice] = useState(false);
   // Mobile nav (hamburger) open state.
   const [navOpen, setNavOpen] = useState(false);
   // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
@@ -108,6 +110,7 @@ export function Dashboard() {
         return b;
       });
       setTab(key);
+      if (key === "payouts") setPayoutsNotice(true);
       setNavOpen(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
@@ -457,6 +460,33 @@ export function Dashboard() {
           }}
         />
       </div>
+      )}
+
+      {tab === "payouts" && payoutsNotice && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.55)" }}
+          onClick={() => setPayoutsNotice(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-sm animate-fade-in rounded-2xl border border-border bg-surface p-5 text-center shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-2 text-2xl" aria-hidden>🚧</div>
+            <h3 className="text-base font-semibold">Still Under Development</h3>
+            <p className="mt-1 text-sm text-text-secondary">Data is not accurate yet.</p>
+            <button
+              autoFocus
+              onClick={() => setPayoutsNotice(false)}
+              className="mt-4 w-full rounded-lg px-3 py-2 text-sm font-medium"
+              style={{ background: "var(--brand)", color: "#0b0f0c" }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
       )}
 
       {tab === "payouts" ? (
