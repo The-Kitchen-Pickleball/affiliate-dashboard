@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "The Kitchen — Affiliate Dashboard",
+  title: "Affiliate · The Kitchen",
   description: "Internal affiliate commission dashboard for The Kitchen Pickleball.",
   // Internal tool: keep it out of every search index, even by direct URL.
   robots: { index: false, follow: false, nocache: true },
