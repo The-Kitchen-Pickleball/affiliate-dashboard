@@ -25,6 +25,7 @@ import { Filters } from "./Filters";
 import { TrendChart, type Granularity, type TrendPoint } from "./TrendChart";
 import { BrandTable } from "./BrandTable";
 import { BrandProfile } from "./BrandProfile";
+import { api } from "@/lib/basePath";
 import { SeasonFilter } from "./SeasonFilter";
 import { PayoutsView } from "./PayoutsView";
 import { HealthReportModal } from "./HealthReportModal";
@@ -116,7 +117,7 @@ export function Dashboard() {
   const loadData = useCallback(() => {
     setRefreshing(true);
     setError(null);
-    fetch("/api/data", { cache: "no-store" })
+    fetch(api("/api/data"), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e.error))))
       .then(setData)
       .catch((e) => setError(String(e)))
@@ -369,7 +370,7 @@ export function Dashboard() {
               </button>
             ))}
             <a
-              href="https://kitchen-social.vercel.app/"
+              href="/"
               className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition hover:bg-surface-2"
             >
               Partners
@@ -422,7 +423,7 @@ export function Dashboard() {
                     </button>
                   ))}
                   <a
-                    href="https://kitchen-social.vercel.app/"
+                    href="/"
                     onClick={() => setNavOpen(false)}
                     className="block w-full px-4 py-2.5 text-left text-sm font-medium text-text-secondary transition hover:bg-surface-2"
                   >

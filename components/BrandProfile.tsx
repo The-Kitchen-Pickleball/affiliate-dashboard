@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getBrandProfile } from "@/lib/brandProfiles";
 import { getBrandLogo } from "@/lib/brandLogos";
+import { api } from "@/lib/basePath";
 
 const STATUS_STYLE: Record<string, { dot: string; label: string }> = {
   Connected: { dot: "var(--good)", label: "Connected" },
@@ -121,7 +122,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
 
   useEffect(() => {
     let live = true;
-    fetch(`/api/credentials?brand=${encodeURIComponent(advertiserId)}`, { cache: "no-store" })
+    fetch(api(`/api/credentials?brand=${encodeURIComponent(advertiserId)}`), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => live && setCreds(d))
       .catch(() => {});

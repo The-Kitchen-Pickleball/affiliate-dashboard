@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
+import { api, BASE_PATH } from "@/lib/basePath";
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
@@ -13,7 +14,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch(api("/api/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
@@ -21,7 +22,8 @@ export default function LoginPage() {
       if (res.ok) {
         const params = new URLSearchParams(window.location.search);
         const from = params.get("from") || "/";
-        window.location.href = from.startsWith("/") ? from : "/";
+        // "from" is the path inside this app (no basePath) — re-add it.
+        window.location.href = BASE_PATH + (from.startsWith("/") ? from : "/");
       } else {
         setError(true);
         setLoading(false);

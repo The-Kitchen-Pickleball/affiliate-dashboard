@@ -29,6 +29,13 @@ export async function middleware(req: NextRequest) {
   const cookie = req.cookies.get("dash_auth")?.value;
   if (cookie === expected) return NextResponse.next();
 
+  // One login for dashboard.thekitchenpickle.com: the kitchen-social project
+  // (which owns the domain and forwards /affiliate here) sets ks_auth =
+  // SHA-256(its password). Accept that too, so signing in there covers this
+  // section. SOCIAL_AUTH_HASH is that hash (env var, never committed — public repo).
+  const social = process.env.SOCIAL_AUTH_HASH;
+  if (social && req.cookies.get("ks_auth")?.value === social) return NextResponse.next();
+
   const url = req.nextUrl.clone();
   url.pathname = "/login";
   url.searchParams.set("from", pathname);
