@@ -316,7 +316,7 @@ export function Dashboard() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
       {/* Header */}
-      <header className="mb-5 grid grid-cols-[auto_1fr_auto] items-center gap-2">
+      <header className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <button
           onClick={resetAll}
           className="justify-self-start"
@@ -372,12 +372,19 @@ export function Dashboard() {
                 {label}
               </button>
             ))}
-            <a
-              href="/"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition hover:bg-surface-2"
-            >
-              Partners
-            </a>
+            {/* Other sections of dashboard.thekitchenpickle.com (kitchen-social app). */}
+            {([
+              ["/", "Partners"],
+              ["/series", "Series"],
+            ] as const).map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition hover:bg-surface-2"
+              >
+                {label}
+              </a>
+            ))}
           </nav>
           <button
             onClick={loadData}
@@ -425,13 +432,19 @@ export function Dashboard() {
                       {label}
                     </button>
                   ))}
-                  <a
-                    href="/"
-                    onClick={() => setNavOpen(false)}
-                    className="block w-full px-4 py-2.5 text-left text-sm font-medium text-text-secondary transition hover:bg-surface-2"
-                  >
-                    Partners
-                  </a>
+                  {([
+                    ["/", "Partners"],
+                    ["/series", "Series"],
+                  ] as const).map(([href, label]) => (
+                    <a
+                      key={href}
+                      href={href}
+                      onClick={() => setNavOpen(false)}
+                      className="block w-full px-4 py-2.5 text-left text-sm font-medium text-text-secondary transition hover:bg-surface-2"
+                    >
+                      {label}
+                    </a>
+                  ))}
                 </div>
               </>
             )}
