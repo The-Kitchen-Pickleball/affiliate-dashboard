@@ -29,12 +29,12 @@ export async function middleware(req: NextRequest) {
   const cookie = req.cookies.get("dash_auth")?.value;
   if (cookie === expected) return NextResponse.next();
 
-  // One login for dashboard.thekitchenpickle.com: the kitchen-social project
-  // (which owns the domain and forwards /affiliate here) sets ks_auth =
-  // SHA-256(its password). Accept that too, so signing in there covers this
-  // section. SOCIAL_AUTH_HASH is that hash (env var, never committed — public repo).
-  const social = process.env.SOCIAL_AUTH_HASH;
-  if (social && req.cookies.get("ks_auth")?.value === social) return NextResponse.next();
+  // One login for dashboard.thekitchenpickle.com: the kitchen-social project owns
+  // the domain, checks the sign-in, and forwards /affiliate/* here with
+  // x-kitchen-gate = ZONE_GATE_SECRET (shared env var on both Vercel projects,
+  // never committed — public repo). Trust that instead of a password of our own.
+  const gate = process.env.ZONE_GATE_SECRET;
+  if (gate && req.headers.get("x-kitchen-gate") === gate) return NextResponse.next();
 
   // A fetch() can't use a redirect to the login page — it would try to parse the
   // HTML as JSON ("Unexpected token <"). Say what actually happened instead.
