@@ -320,11 +320,18 @@ function computeChecks(o: {
       const now = nowCentral();
       const rpmHours = (Date.parse(now.replace(" ", "T")) - Date.parse(rpmScrapedAt.replace(" ", "T"))) / 3_600_000;
       const rpmStale = Number.isFinite(rpmHours) && rpmHours > 20;
+      // Daytime lag (Mac asleep) isn't broken, but RPM's numbers are behind and
+      // look like a slow day — 2026-10-11 the Mac slept 2pm–10pm and RPM showed
+      // its lowest day until a manual run caught up 4 sales. Say so (yellow).
+      const centralHour = Number(nowCentral().slice(11, 13));
+      const rpmBehind = !rpmStale && Number.isFinite(rpmHours) && rpmHours > 3 && centralHour >= 8 && centralHour < 23;
       checks.push({
         label: "RPM is updating",
-        status: rpmStale ? "error" : "ok",
+        status: rpmStale ? "error" : rpmBehind ? "warn" : "ok",
         detail: rpmStale
           ? `RPM hasn't updated in ${rpmHours.toFixed(1)}h (last ${rpmScrapedAt}) — it runs on Dane's Mac, so first make sure the Mac has been on; if it stays stale, its Collabs cookies may need a refresh.`
+          : rpmBehind
+          ? `RPM last updated ${rpmHours.toFixed(1)}h ago (${rpmScrapedAt}) — the Mac is probably asleep, so today's RPM number is behind. Wake the Mac and it catches up within a minute.`
           : `Last RPM update ${rpmScrapedAt}.`,
       });
     }
