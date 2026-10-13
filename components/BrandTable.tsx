@@ -238,8 +238,8 @@ function FragmentRow({
               if (pct == null) return null;
               const n = pct * 100;
               return (
-                <span className="shrink-0 rounded-full border border-border px-1.5 text-[10px] tabular-nums text-text-muted sm:text-[11px]">
-                  {n.toFixed(n % 1 ? 1 : 0)}%
+                <span className="shrink-0 tabular-nums text-text-muted">
+                  - {n.toFixed(n % 1 ? 1 : 0)}%
                 </span>
               );
             })()}
