@@ -1,3 +1,5 @@
+import { BASE_PATH } from "./basePath";
+
 /**
  * Partner logos, keyed by advertiser_id (lowercase). The images are the profile
  * pictures the kitchen-social dashboard already pulls from each partner's
@@ -6,8 +8,10 @@
  *
  * Public bucket URL: <SUPABASE_URL>/storage/v1/object/public/thumbnails/avatars/<slug>.jpg
  * The slug is kitchen-social's partner-name slug, which usually differs from our
- * advertiser_id — hence this explicit map. Brands without an entry (e.g. Mark,
- * SLAMIT — their IG lookups failed) render with no logo, handled by the caller.
+ * advertiser_id — hence this explicit map. Brands without an entry (e.g. SLAMIT —
+ * its IG lookup failed) render with no logo, handled by the caller. Entries
+ * starting with "/" are files in this app's public/ folder (Mark: cropped from
+ * markpickleball.com's share image, since its IG lookup failed too).
  */
 const LOGO_BASE =
   "https://slcdlyvalgfzldluorre.supabase.co/storage/v1/object/public/thumbnails/avatars";
@@ -41,6 +45,7 @@ const LOGO_FILE: Record<string, string> = {
   "joola-bundles": "joola.jpg",
   kitchenblockers: "kitchen-blockers.jpg",
   luzz: "luzz.jpg",
+  mark: "/logos/mark.jpg",
   neonic: "neonic.jpg",
   nox: "nox.jpg",
   paddletek: "paddletek.jpg",
@@ -63,5 +68,6 @@ const LOGO_FILE: Record<string, string> = {
 /** Full public logo URL for a brand, or null if we don't have one. */
 export function getBrandLogo(advertiserId: string): string | null {
   const file = LOGO_FILE[advertiserId.toLowerCase()];
-  return file ? `${LOGO_BASE}/${file}` : null;
+  if (!file) return null;
+  return file.startsWith("/") ? `${BASE_PATH}${file}` : `${LOGO_BASE}/${file}`;
 }
