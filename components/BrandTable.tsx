@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { BrandDetail } from "@/lib/analytics";
 import { usd, num, shortDate } from "@/lib/format";
 import { getBrandLogo } from "@/lib/brandLogos";
+import { getBrandProfile } from "@/lib/brandProfiles";
 
 const STATUS_COLOR: Record<string, string> = {
   approved: "var(--good)",
@@ -231,6 +232,17 @@ function FragmentRow({
             ) : (
               <span className="block max-w-[120px] truncate sm:max-w-[220px]">{r.advertiser}</span>
             )}
+            {(() => {
+              // The brand's contracted commission rate (from brandProfiles), e.g. "15%".
+              const pct = getBrandProfile(r.advertiserId)?.commissionPct;
+              if (pct == null) return null;
+              const n = pct * 100;
+              return (
+                <span className="shrink-0 rounded-full border border-border px-1.5 text-[10px] tabular-nums text-text-muted sm:text-[11px]">
+                  {n.toFixed(n % 1 ? 1 : 0)}%
+                </span>
+              );
+            })()}
           </span>
         </td>
         <td className="px-2 py-2 sm:px-3 text-right tabular-nums text-text-secondary">{num(r.count)}</td>
