@@ -360,7 +360,7 @@ export function Dashboard() {
           <nav className="mr-1 hidden items-center gap-1 sm:flex">
             {([
               ["sales", "Sales"],
-              ["payouts", "Payouts"],
+              // ["payouts", "Payouts"], — hidden until Payouts is finished (Dane, 2026-10-14)
             ] as const).map(([key, label]) => (
               <button
                 key={key}
@@ -420,7 +420,7 @@ export function Dashboard() {
                 <div className="absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
                   {([
                     ["sales", "Sales"],
-                    ["payouts", "Payouts"],
+                    // ["payouts", "Payouts"], — hidden until Payouts is finished
                   ] as const).map(([key, label]) => (
                     <button
                       key={key}
