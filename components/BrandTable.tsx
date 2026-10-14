@@ -216,6 +216,8 @@ function FragmentRow({
                 />
               ) : null;
             })()}
+            {/* Name + rate: stacked on phones (so the money columns fit), side by side from sm up. */}
+            <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:gap-1.5">
             {onSelectBrand ? (
               <button
                 type="button"
@@ -238,11 +240,12 @@ function FragmentRow({
               if (pct == null) return null;
               const n = pct * 100;
               return (
-                <span className="shrink-0 tabular-nums text-text-muted">
-                  - {n.toFixed(n % 1 ? 1 : 0)}%
+                <span className="shrink-0 text-[11px] tabular-nums text-text-muted sm:text-[length:inherit]">
+                  <span className="hidden sm:inline">- </span>{n.toFixed(n % 1 ? 1 : 0)}%
                 </span>
               );
             })()}
+            </span>
           </span>
         </td>
         <td className="px-2 py-2 sm:px-3 text-right tabular-nums text-text-secondary">{num(r.count)}</td>
