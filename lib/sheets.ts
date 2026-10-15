@@ -58,7 +58,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
 
   const [commRes, statusRes, rpmRes, auditRes, brandStatusRes] = await Promise.all([
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${COMMISSIONS_TAB}!A:V` }),
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${STATUS_TAB}!A2` }).catch(() => null),
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${STATUS_TAB}!A2:D2` }).catch(() => null),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${RPM_TRACK_TAB}!A:E` }).catch(() => null),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${AUDIT_TAB}!A:H` }).catch(() => null),
     sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${BRAND_STATUS_TAB}!A:B` }).catch(() => null),
@@ -142,6 +142,9 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   }
 
   const heartbeat = statusRes?.data.values?.[0]?.[0] ? String(statusRes.data.values[0][0]) : null;
+  // B2:D2 = the 3 heartbeats before this one (newest first), written by write-heartbeat.js.
+  const prevHeartbeats = (statusRes?.data.values?.[0] ?? []).slice(1).map((c) => String(c ?? ""));
+  const threeRunsAgo = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(prevHeartbeats[2] ?? "") ? prevHeartbeats[2] : null;
   const rpmTrack = (rpmRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const auditVals = (auditRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
   const brandStatusVals = (brandStatusRes?.data.values ?? []).map((r) => r.map((c) => String(c ?? "")));
@@ -192,7 +195,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   });
 
   const checks = computeChecks({
-    lastScrape, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
+    lastScrape, threeRunsAgo, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
     rpmTrack, auditVals, brandStatusVals, futureDated, badTimestamp, duplicateIds, orderSales,
     brandNames: Object.fromEntries(rows.map((r) => [r.advertiserId, r.advertiser])),
     since30: addDays(today, -30),
@@ -238,6 +241,7 @@ function friendlyTime(s: string): string {
 /** The morning health check — the same things I verify by hand, on demand. */
 function computeChecks(o: {
   lastScrape: string | null;
+  threeRunsAgo: string | null;
   brandComm: Record<string, number>;
   brandApprovedComm: Record<string, number>;
   brandOrders: Record<string, number>;
@@ -376,7 +380,7 @@ function computeChecks(o: {
   //     tab (shared reconcileToSheets / appendDeltaRow); Audit Aggregates'
   //     captured_at (col G) is used too, so brands that stopped before Brand Status
   //     existed are still caught. A brand more than 3h behind the latest run's
-  //     heartbeat has missed ~2 runs in a row. Comparing to the heartbeat (not the
+  //     heartbeat AND older than the heartbeat 3 runs back has missed 3 runs in a row. Comparing to the heartbeat (not the
   //     clock) keeps this quiet overnight and when GitHub delays a run.
   //     RPM is skipped — it runs on Dane's Mac and has its own 20h check above.
   //     Gruvn is skipped at Dane's request (2026-10-06): no sales ever, and its
@@ -395,7 +399,13 @@ function computeChecks(o: {
     const behind: { name: string; note: string }[] = [];
     for (const [id, at] of latest) {
       const hoursBehind = (lastRun - Date.parse(at.replace(" ", "T"))) / 3_600_000;
-      if (Number.isFinite(hoursBehind) && hoursBehind > 3) {
+      // Also require the brand to have missed the last 3 runs (its last success is
+      // older than the heartbeat from 3 runs back). On its own, ">3h behind" fired
+      // after ONE failed run following the overnight gap — 2026-10-15 Mark missed
+      // the 11:30pm run once (a captcha hiccup) and looked 4h+ behind. Falls back
+      // to the 3h rule alone until the heartbeat history exists.
+      const missed3 = !o.threeRunsAgo || at < o.threeRunsAgo;
+      if (Number.isFinite(hoursBehind) && hoursBehind > 3 && missed3) {
         const age = hoursBehind >= 48 ? `${Math.round(hoursBehind / 24)} days` : `${Math.round(hoursBehind)}h`;
         behind.push({ name: o.brandNames[id] || id, note: `last updated ${friendlyTime(at)} · ${age} ago` });
       }
