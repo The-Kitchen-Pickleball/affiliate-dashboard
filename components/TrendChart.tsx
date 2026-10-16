@@ -4,11 +4,7 @@ import { useState } from "react";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
-  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -61,15 +57,6 @@ const METRICS: { key: Metric; label: string }[] = [
 
 function fmt(metric: Metric, v: number): string {
   return metric === "count" ? num(v) : usd(v, { cents: false });
-}
-
-/** Short label for the top of a monthly bar — 12 bars must fit on a phone. */
-function fmtCompact(metric: Metric, v: number): string {
-  if (metric === "count") return num(v);
-  const a = Math.abs(v);
-  if (a >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-  if (a >= 1_000) return `$${(v / 1_000).toFixed(a >= 100_000 ? 0 : 1)}k`;
-  return `$${Math.round(v)}`;
 }
 
 function Segmented({
@@ -129,6 +116,46 @@ function CustomTooltip({ active, payload, metric }: TipProps) {
   );
 }
 
+/** Monthly view: one row per month (newest first) — month, a long rounded bar,
+ *  the bold total on the right, and the change vs the month before underneath. */
+function MonthRows({ data, metric, onSelect }: { data: TrendPoint[]; metric: Metric; onSelect: (p: TrendPoint) => void }) {
+  const max = Math.max(1, ...data.map((d) => d[metric]));
+  return (
+    <div className="flex flex-col">
+      {[...data].reverse().map((d) => {
+        const up = d.deltaPct != null && d.deltaPct > 0;
+        const down = d.deltaPct != null && d.deltaPct < 0;
+        return (
+          <button
+            key={d.key}
+            onClick={() => onSelect(d)}
+            className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-x-3 rounded-md px-2 py-1.5 text-left hover:bg-surface-2 sm:grid-cols-[5rem_1fr_6.5rem]"
+          >
+            <span className="text-sm font-medium text-text-primary">{d.label}</span>
+            <span className="h-2.5 overflow-hidden rounded-full bg-surface-2">
+              <span
+                className="block h-full rounded-full"
+                style={{ width: `${(Math.max(0, d[metric]) / max) * 100}%`, background: BRAND, opacity: d.current ? 0.45 : 1 }}
+              />
+            </span>
+            <span className="text-right text-sm font-semibold tabular-nums text-text-primary">{fmt(metric, d[metric])}</span>
+            <span />
+            <span className="mt-0.5 text-[11px] italic text-text-muted">
+              {d.current && "so far · "}
+              {d.deltaPct != null ? (
+                <span style={{ color: up ? "var(--good)" : down ? "var(--bad)" : undefined }}>
+                  {up ? "▲" : down ? "▼" : "—"} {Math.abs(d.deltaPct).toFixed(1)}% vs prev month
+                </span>
+              ) : null}
+            </span>
+            <span />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function TrendChart({ data, metric, onMetric, granularity, onGranularity, range, onRange, onSelect }: Props) {
   const [open, setOpen] = useState(true);
   const yTick = (v: number) => (metric === "count" ? num(v) : usd(v, { cents: false }));
@@ -175,27 +202,11 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
         <Segmented value={metric} onChange={(v) => onMetric(v as Metric)} options={METRICS} />
       </div>
 
+      {granularity === "month" ? (
+        <MonthRows data={data} metric={metric} onSelect={onSelect} />
+      ) : (
       <div className="h-56 w-full sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
-          {granularity === "month" ? (
-            <BarChart data={data} margin={{ top: 20, right: 8, bottom: 0, left: 0 }} barCategoryGap="18%" onClick={handleChartClick} style={{ cursor: "pointer" }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="2 4" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} minTickGap={4} />
-              <YAxis tickFormatter={yTick} tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} width={54} />
-              <Tooltip cursor={{ fill: "var(--surface-2)" }} content={<CustomTooltip metric={metric} />} />
-              <Bar dataKey={metric} radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                {data.map((d, i) => (
-                  <Cell key={i} fill={BRAND} fillOpacity={d.current ? 0.45 : 1} />
-                ))}
-                <LabelList
-                  dataKey={metric}
-                  position="top"
-                  formatter={(v: unknown) => fmtCompact(metric, Number(v))}
-                  style={{ fontSize: 10, fill: "var(--text-secondary)", fontVariantNumeric: "tabular-nums" }}
-                />
-              </Bar>
-            </BarChart>
-          ) : (
             <AreaChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 0 }} onClick={handleChartClick} style={{ cursor: "pointer" }}>
               <defs>
                 <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
@@ -209,12 +220,12 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
               <Tooltip content={<CustomTooltip metric={metric} />} />
               <Area type="monotone" dataKey={metric} stroke={BRAND} strokeWidth={2} fill="url(#fill)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
             </AreaChart>
-          )}
         </ResponsiveContainer>
       </div>
+      )}
 
       {granularity === "month" && (
-        <p className="mt-2 text-xs text-text-muted">Last 12 months · lighter bar = current month so far</p>
+        <p className="mt-2 text-xs text-text-muted">Last 12 months · newest first · click a month to filter to it</p>
       )}
       </div>
       )}
