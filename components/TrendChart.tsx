@@ -8,6 +8,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -60,6 +61,15 @@ const METRICS: { key: Metric; label: string }[] = [
 
 function fmt(metric: Metric, v: number): string {
   return metric === "count" ? num(v) : usd(v, { cents: false });
+}
+
+/** Short label for the top of a monthly bar — 12 bars must fit on a phone. */
+function fmtCompact(metric: Metric, v: number): string {
+  if (metric === "count") return num(v);
+  const a = Math.abs(v);
+  if (a >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (a >= 1_000) return `$${(v / 1_000).toFixed(a >= 100_000 ? 0 : 1)}k`;
+  return `$${Math.round(v)}`;
 }
 
 function Segmented({
@@ -168,7 +178,7 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
       <div className="h-56 w-full sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           {granularity === "month" ? (
-            <BarChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 0 }} barCategoryGap="18%" onClick={handleChartClick} style={{ cursor: "pointer" }}>
+            <BarChart data={data} margin={{ top: 20, right: 8, bottom: 0, left: 0 }} barCategoryGap="18%" onClick={handleChartClick} style={{ cursor: "pointer" }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="2 4" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} minTickGap={4} />
               <YAxis tickFormatter={yTick} tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} width={54} />
@@ -177,6 +187,12 @@ export function TrendChart({ data, metric, onMetric, granularity, onGranularity,
                 {data.map((d, i) => (
                   <Cell key={i} fill={BRAND} fillOpacity={d.current ? 0.45 : 1} />
                 ))}
+                <LabelList
+                  dataKey={metric}
+                  position="top"
+                  formatter={(v: unknown) => fmtCompact(metric, Number(v))}
+                  style={{ fontSize: 10, fill: "var(--text-secondary)", fontVariantNumeric: "tabular-nums" }}
+                />
               </Bar>
             </BarChart>
           ) : (
