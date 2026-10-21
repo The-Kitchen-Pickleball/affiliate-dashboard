@@ -335,6 +335,25 @@ function computeChecks(o: {
     }
   }
 
+  // 2c. Selkirk freshness — Selkirk Circle runs on Dane's Mac with RPM (its sign-in
+  //     is an emailed code, so it lives on saved cookies), so it gets RPM's lenient
+  //     20h rule instead of the every-run brand check below. Added 2026-10-21.
+  {
+    const row = o.brandStatusVals.slice(1).find((r) => String(r[0] ?? "").toLowerCase() === "selkirk");
+    const at = String(row?.[1] ?? "");
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(at)) {
+      const hours = (Date.parse(nowCentral().replace(" ", "T")) - Date.parse(at.replace(" ", "T"))) / 3_600_000;
+      const stale = Number.isFinite(hours) && hours > 20;
+      checks.push({
+        label: "Selkirk is updating",
+        status: stale ? "error" : "ok",
+        detail: stale
+          ? `Selkirk hasn't updated in ${hours.toFixed(1)}h (last ${at}) — it runs on Dane's Mac with RPM, so first make sure the Mac has been on; if it stays stale, its Selkirk Circle cookies may need a refresh.`
+          : `Last Selkirk update ${at}.`,
+      });
+    }
+  }
+
   // 3. Other brands with platform-truth (Audit Aggregates → SocialSnowball etc.).
   const offBrands: string[] = [];
   const offBrandIds: string[] = [];
@@ -382,7 +401,7 @@ function computeChecks(o: {
   //     A retired brand will keep showing here until its row is deleted from both tabs.
   if (o.lastScrape) {
     const lastRun = Date.parse(o.lastScrape.replace(" ", "T"));
-    const NOT_MONITORED = new Set(["rpm-pickleball", "gruvn"]);
+    const NOT_MONITORED = new Set(["rpm-pickleball", "gruvn", "selkirk"]); // selkirk: Mac-run, own 20h check (2c)
     const latest = new Map<string, string>();
     const note = (id: string, at: string) => {
       if (!id || NOT_MONITORED.has(id) || !Number.isFinite(Date.parse(at.replace(" ", "T")))) return;
@@ -468,6 +487,7 @@ function computeChecks(o: {
     "Scraper is running": "Scraper has stopped",
     "RPM matches the platform": "RPM doesn't match the platform",
     "RPM is updating": "RPM isn't updating",
+    "Selkirk is updating": "Selkirk isn't updating",
     "Brands match their platforms": "Brands don't match their platforms",
     "Every brand is updating": "Brands not updating",
     "No order counted twice": "Orders counted twice",

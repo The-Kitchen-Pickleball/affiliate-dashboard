@@ -27,7 +27,7 @@ export const BRAND_LOGIN_URLS: Record<string, string> = {
   proton: "https://af.uppromote.com/proton-sports-inc/login",
   kitchenblockers: "https://af.uppromote.com/kitchenblockers/login",
   aireo: "https://af.uppromote.com/qm0wg4-ay/login",
-  selkirk: "https://af.uppromote.com/selkirk-sport/login",
+  selkirk: "https://shopify.com/70004768933/account",
   speedup: "https://af.uppromote.com/speeduppickle/login",
   slyce: "https://af.uppromote.com/d7fa5b-2/login",
 
