@@ -11,7 +11,7 @@ import { BASE_PATH } from "./basePath";
  * advertiser_id — hence this explicit map. Brands without an entry (e.g. SLAMIT —
  * its IG lookup failed) render with no logo, handled by the caller. Entries
  * starting with "/" are files in this app's public/ folder (Mark: cropped from
- * markpickleball.com's share image, since its IG lookup failed too).
+ * markpickleball.com's share image, since its IG lookup failed too; Enhance: the site icon, since its IG avatar was a different brand).
  */
 const LOGO_BASE =
   "https://slcdlyvalgfzldluorre.supabase.co/storage/v1/object/public/thumbnails/avatars";
@@ -27,7 +27,7 @@ const LOGO_FILE: Record<string, string> = {
   diadem: "diadem.jpg",
   dominator: "dominator.jpg",
   engage: "engage.jpg",
-  enhance: "enhance.jpg",
+  enhance: "/logos/enhance.png",
   erne: "erne.jpg",
   flik: "flik.jpg",
   franklin: "franklin.jpg",
