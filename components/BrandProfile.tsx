@@ -202,7 +202,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
                 onBack();
               }}
               aria-label="All brands"
-              className="rounded-lg border border-border px-2.5 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
+              className="rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-brand-ink shadow-sm hover:opacity-90"
             >
               ←<span className="hidden sm:inline"> All brands</span>
             </button>
