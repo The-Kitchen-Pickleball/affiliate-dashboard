@@ -92,12 +92,6 @@ export function Dashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Clicking the logo does a full refresh back to the default home view —
-  // reloads the page (fresh data) and clears any ?brand / filters via the URL.
-  const resetAll = useCallback(() => {
-    window.location.assign("/");
-  }, []);
-
   // Switch top-level view (Sales / Payouts). Leaves any brand drill-in and closes
   // the mobile menu.
   const goTab = useCallback(
@@ -318,11 +312,11 @@ export function Dashboard() {
       {/* Header */}
       <header className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <button
-          onClick={resetAll}
+          onClick={() => window.location.reload()}
           className="justify-self-start"
           style={{ color: "var(--logo)" }}
-          title="Reset dashboard"
-          aria-label="Reset dashboard"
+          title="Refresh page"
+          aria-label="Refresh page"
         >
           <Logo className="h-9 w-auto sm:h-10" />
         </button>
