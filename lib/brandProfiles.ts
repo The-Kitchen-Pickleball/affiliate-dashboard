@@ -115,10 +115,13 @@ export const CONTRACT_STARTS: Record<string, string> = {
  * Named seasons per brand, shown as quick filters on that brand's page.
  * A season runs from `start` through `end` (or today if still open).
  * Honcho: seasons start when registration opens ("Reg Day 1" in their report).
- * Fall '26 / Late-Spring '26 aren't listed — their report pages are broken
- * ("Invalid filter") so we have neither dates nor numbers for them yet.
+ * Fall '26 / Late-Spring '26 were backfilled 2026-10-26 once Honcho fixed their pages.
  */
 export interface Season { label: string; start: string; end?: string }
 export const BRAND_SEASONS: Record<string, Season[]> = {
-  honcho: [{ label: "Winter '26–27", start: "2026-09-21" }],
+  honcho: [
+    { label: "Winter '26–27", start: "2026-09-21" },
+    { label: "Fall '26", start: "2026-06-29", end: "2026-09-20" },
+    { label: "Late-Spring '26", start: "2026-04-06", end: "2026-06-28" },
+  ],
 };
