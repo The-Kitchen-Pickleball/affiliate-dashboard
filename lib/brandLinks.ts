@@ -19,6 +19,8 @@ export const BRAND_LOGIN_URLS: Record<string, string> = {
   vatic: "https://af.uppromote.com/vatic-pro/login",
   gruvn: "https://af.uppromote.com/gruvn/login",
   sixzero: "https://af.uppromote.com/six-zero-7668/login",
+  sixzerousa: "https://af.uppromote.com/six-zero-usa/login",
+  sixzerocanada: "https://af.uppromote.com/sixzerocanada/login",
   neonic: "https://af.uppromote.com/neonic-pickleball/login",
   chorus: "https://af.uppromote.com/647c98-4/login",
   thrive: "https://af.uppromote.com/thrive-pickleball/login",

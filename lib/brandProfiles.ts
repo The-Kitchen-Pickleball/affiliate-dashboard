@@ -65,6 +65,8 @@ export const BRAND_PROFILES: Record<string, BrandProfile> = {
   "rpm-pickleball": { platform: "Shopify Collabs", platformUrl: "https://www.shopify.com/collabs/creators", commissionPct: 0.4, code: "KITCHEN", discount: "15% off", storeLink: "https://rpmpb.com/KITCHEN", connected: "Connected", notes: "Estimated — Shopify Collabs has no API; figures reconstructed from daily snapshots" },
   selkirk: { platform: "Selkirk Circle", platformUrl: "https://shopify.com/70004768933/account", commissionPct: 0.15, code: "INF-KITCHEN", discount: "Bonus Bucks", storeLink: "https://selkirk.com/?circle_aff=inf-kitchen", connected: "Connected" },
   sixzero: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/six-zero-7668", commissionPct: 0.15, code: "KITCHEN", discount: "10% off", storeLink: "https://www.sixzeropickleball.com?sca_ref=4355001.YZeYJiXGHC", connected: "Connected" },
+  sixzerousa: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/six-zero-usa", commissionPct: 0.15, code: "KITCHEN", discount: "10% off", storeLink: "https://sixzeropickleball.us?sca_ref=9892702.osMOSfenoa0rlhS", connected: "Connected" },
+  sixzerocanada: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/sixzerocanada", commissionPct: 0.15, code: "KITCHEN10", discount: "10% off", storeLink: "https://sixzerocanada.com?sca_ref=8343145.cV2Cm5SOX3", connected: "Connected" },
   slamit: { platform: "GoAffPro", platformUrl: "https://slamit.goaffpro.com/", commissionPct: 0.2, code: "THEKITCHEN", discount: "15% off", storeLink: "https://slamit.com/pages/pickleball?ref=THEKITCHEN", connected: "Connected" },
   slyce: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/d7fa5b-2/login", commissionPct: 0.1, code: "KITCHEN", discount: "10% off", storeLink: "https://slycesport.com?sca_ref=11884980.71zT4TJbZdI3V9", connected: "Connected" },
   speedup: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/speeduppickle/login", commissionPct: 0.15, code: "KITCHEN", discount: "10% off", storeLink: "https://speeduppickle.com?sca_ref=10866486.wyeR1U0Isb", connected: "Connected" },
@@ -109,6 +111,8 @@ export const CONTRACT_STARTS: Record<string, string> = {
   honcho: "2026-03-16",
   honolulu: "2026-10-06",
   sixzero: "2026-10-06",
+  sixzerousa: "2026-10-06",
+  sixzerocanada: "2026-10-06",
 };
 
 /**
