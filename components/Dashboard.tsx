@@ -453,8 +453,8 @@ export function Dashboard() {
           preset={preset}
           onPreset={setPreset}
           advertisers={view?.allBrands ?? []}
-          selectedAdvertisers={advertisers}
-          onAdvertisers={setAdvertisers}
+          selectedAdvertisers={brand ? [brand] : advertisers}
+          onAdvertisers={(ids) => (brand ? selectBrand(ids[0] ?? null) : setAdvertisers(ids))}
           customStart={customStart}
           customEnd={customEnd}
           onCustomRange={(s, e) => {
