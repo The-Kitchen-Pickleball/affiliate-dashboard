@@ -312,7 +312,7 @@ export function Dashboard() {
       {/* Header */}
       <header className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => window.location.assign(window.location.pathname)}
           className="justify-self-start"
           style={{ color: "var(--logo)" }}
           title="Refresh page"
