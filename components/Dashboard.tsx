@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ApiResponse, Status } from "@/lib/types";
 import type { RangePreset } from "@/lib/analytics";
 import { CONTRACT_STARTS, BRAND_SEASONS } from "@/lib/brandProfiles";
+import { BRAND_LOCATIONS } from "@/lib/brandGroups";
+import { LocationFilter } from "./LocationFilter";
 import {
   applyNonDateFilters,
   byBrandDetailed,
@@ -76,6 +78,8 @@ export function Dashboard() {
   const [navOpen, setNavOpen] = useState(false);
   // Which brand's detail page we're viewing (null = overview). Synced to ?brand=.
   const [brand, setBrand] = useState<string | null>(null);
+  // Store/location filter inside a grouped brand (e.g. Six Zero: USA / Canada / International).
+  const [location, setLocation] = useState<string | null>(null);
 
   // Initialise from the URL and keep in sync with the browser back/forward buttons.
   useEffect(() => {
@@ -87,6 +91,7 @@ export function Dashboard() {
 
   const selectBrand = useCallback((id: string | null) => {
     setBrand(id);
+    setLocation(null);
     const url = id ? `?brand=${encodeURIComponent(id)}` : window.location.pathname;
     window.history.pushState({}, "", url);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -126,7 +131,7 @@ export function Dashboard() {
   }, [loadData]);
 
   // When viewing a brand's detail page, scope every number to just that brand.
-  const filters = { preset, advertisers: brand ? [brand] : advertisers, statuses };
+  const filters = { preset, advertisers: brand ? [brand] : advertisers, statuses, location: brand ? location : null };
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -247,7 +252,7 @@ export function Dashboard() {
         .sort((a, b) => a.name.localeCompare(b.name)),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, preset, customStart, customEnd, advertisers, statuses, brand]);
+  }, [data, preset, customStart, customEnd, advertisers, statuses, brand, location]);
 
   const brandName =
     brand && data ? data.rows.find((r) => r.advertiserId === brand)?.advertiser ?? brand : null;
@@ -511,6 +516,9 @@ export function Dashboard() {
         <div className="flex flex-col gap-5">
           {/* Brand detail: profile card (with its own back button), on a brand page */}
           {brand && <BrandProfile advertiserId={brand} advertiser={brandName ?? brand} onBack={() => selectBrand(null)} />}
+          {brand && BRAND_LOCATIONS[brand] && (
+            <LocationFilter locations={BRAND_LOCATIONS[brand]} selected={location} onPick={setLocation} />
+          )}
           {brand && BRAND_SEASONS[brand] && (
             <SeasonFilter
               seasons={BRAND_SEASONS[brand]}

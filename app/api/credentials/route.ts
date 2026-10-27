@@ -30,7 +30,7 @@ const SLUG_TO_NOTION: Record<string, string> = {
   head: "HEAD", holbrook: "Holbrook", honolulu: "Honolulu", joola: "JOOLA", luzz: "Luzz",
   mark: "Mark", neonic: "Neonic", paddletek: "Paddletek", pickleballapes: "Pickleball Apes",
   pickleballgetaways: "Pickleball Getaways", proton: "Proton", "rpm-pickleball": "RPM",
-  selkirk: "Selkirk", sixzero: "Six Zero", sixzerousa: "Six Zero", sixzerocanada: "Six Zero", slamit: "SLAMIT", slyce: "Slyce", speedup: "Speedup",
+  selkirk: "Selkirk", sixzero: "Six Zero", slamit: "SLAMIT", slyce: "Slyce", speedup: "Speedup",
   thrive: "Thrive", udrippin: "UDrippin", vatic: "Vatic", volair: "Volair", "warping-point": "Warping Point",
 };
 

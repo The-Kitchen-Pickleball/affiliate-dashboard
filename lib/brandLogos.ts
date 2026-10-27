@@ -55,8 +55,6 @@ const LOGO_FILE: Record<string, string> = {
   "rpm-pickleball": "rpm.jpg",
   selkirk: "selkirk.jpg",
   sixzero: "six-zero.jpg",
-  sixzerousa: "six-zero.jpg",
-  sixzerocanada: "six-zero.jpg",
   slyce: "slyce.jpg",
   speedup: "speedup.jpg",
   thrive: "thrive.jpg",

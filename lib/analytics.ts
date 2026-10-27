@@ -6,6 +6,7 @@ export interface Filters {
   preset: RangePreset;
   advertisers: string[]; // advertiserId list; empty = all
   statuses: Status[]; // empty = all
+  location?: string | null; // store/location within a grouped brand; null/undefined = all
 }
 
 /** Central-time "today" as YYYY-MM-DD, computed on the client's clock but
@@ -85,6 +86,7 @@ export function applyNonDateFilters(rows: Row[], f: Filters): Row[] {
   return rows.filter(
     (r) =>
       (advSet.size === 0 || advSet.has(r.advertiserId)) &&
+      (!f.location || r.location === f.location) &&
       (statSet.size === 0 || statSet.has(r.status)),
   );
 }

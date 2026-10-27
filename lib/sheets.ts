@@ -1,3 +1,4 @@
+import { BRAND_GROUPS } from "./brandGroups";
 import { google } from "googleapis";
 import type { Row, Status, HealthCheck, PayoutRow } from "./types";
 
@@ -92,6 +93,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const brandRecent: Record<string, number> = {}; // sales in the last 3 days
   const brandPriorDays: Record<string, Set<string>> = {}; // distinct active days, days 3–30 ago
   const seenTx = new Set<string>();
+  const rawNames: Record<string, string> = {}; // per-store names for the health checks
   let futureDated = 0;
   let badTimestamp = 0;
   let duplicateIds = 0;
@@ -128,10 +130,14 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
       else seenTx.add(tx);
     }
 
+    const group = BRAND_GROUPS[advertiserId];
+    const rawName = String(r[iAdv] ?? r[iAdvId] ?? "Unknown");
+    rawNames[advertiserId] = rawName;
     rows.push({
       transactionId: tx,
-      advertiserId,
-      advertiser: String(r[iAdv] ?? r[iAdvId] ?? "Unknown"),
+      advertiserId: group?.id ?? advertiserId,
+      advertiser: group?.name ?? rawName,
+      location: group?.location,
       date,
       datetime,
       sale: toDollars(r[iSale]),
@@ -197,7 +203,7 @@ export async function fetchRows(): Promise<{ rows: Row[]; lastScrape: string | n
   const checks = computeChecks({
     lastScrape, threeRunsAgo, brandComm, brandApprovedComm, brandOrders, brandRecent, brandPriorDays,
     rpmTrack, auditVals, brandStatusVals, futureDated, badTimestamp, duplicateIds, orderSales,
-    brandNames: Object.fromEntries(rows.map((r) => [r.advertiserId, r.advertiser])),
+    brandNames: rawNames,
     since30: addDays(today, -30),
   });
 

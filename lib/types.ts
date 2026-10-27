@@ -17,6 +17,8 @@ export interface Row {
    *  rows; for RPM (delta-based) a single row bundles many orders, so this carries
    *  the true count (from `order_ref`) and the dashboard sums it for "# of Sales". */
   orders: number;
+  /** Store/location for brands that run several (e.g. Six Zero USA / Canada). */
+  location?: string;
 }
 
 /** One line of the health report (scraper freshness, RPM vs platform, brand drift,
