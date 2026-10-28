@@ -45,6 +45,7 @@ export const BRAND_LOGIN_URLS: Record<string, string> = {
   engage: "https://affiliates.socialsnowball.io/",
   erne: "https://affiliates.socialsnowball.io/",
   daps: "https://affiliates.socialsnowball.io/",
+  jpritchard: "https://affiliates.socialsnowball.io/",
 
   // RPM — Shopify Collabs
   rpm: "https://collabs.shopify.com/",
