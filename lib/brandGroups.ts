@@ -5,6 +5,8 @@ export const BRAND_GROUPS: Record<string, { id: string; name: string; location: 
   sixzero: { id: "sixzero", name: "Six Zero", location: "International (AUD)" },
   sixzerousa: { id: "sixzero", name: "Six Zero", location: "USA" },
   sixzerocanada: { id: "sixzero", name: "Six Zero", location: "Canada" },
+  // Paddletek moved from Shortly (id "paddletek") to UpPromote on 2026-11-02; fold the new rows in.
+  paddletekup: { id: "paddletek", name: "Paddletek", location: "UpPromote" },
 };
 
 /** Location filter options shown on a grouped brand's page. */
