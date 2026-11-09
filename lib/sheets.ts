@@ -407,7 +407,7 @@ function computeChecks(o: {
   //     A retired brand will keep showing here until its row is deleted from both tabs.
   if (o.lastScrape) {
     const lastRun = Date.parse(o.lastScrape.replace(" ", "T"));
-    const NOT_MONITORED = new Set(["rpm-pickleball", "gruvn", "selkirk", "head"]); // selkirk: Mac-run, own 20h check (2c); head: Awin token dead since 2026-11-02, muted until a new token is set (remove "head" then)
+    const NOT_MONITORED = new Set(["rpm-pickleball", "gruvn", "selkirk", "head", "stria"]); // stria: Mac-run with RPM (RPM's 20h check covers it); // selkirk: Mac-run, own 20h check (2c); head: Awin token dead since 2026-11-02, muted until a new token is set (remove "head" then)
     const latest = new Map<string, string>();
     const note = (id: string, at: string) => {
       if (!id || NOT_MONITORED.has(id) || !Number.isFinite(Date.parse(at.replace(" ", "T")))) return;

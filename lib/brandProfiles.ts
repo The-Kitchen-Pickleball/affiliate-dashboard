@@ -64,6 +64,7 @@ export const BRAND_PROFILES: Record<string, BrandProfile> = {
   proton: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/proton-sports-inc/login", commissionPct: 0.5, code: "KITCHEN", discount: "15% off", storeLink: "https://protonsports.com/discount/kitchen", connected: "Connected" },
   kitchenblockers: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/kitchenblockers/login", commissionPct: 0.4, code: "KITCHEN", discount: "10% off", storeLink: "https://kitchenblockers.com?sca_ref=12331241.hfJz9sateb", connected: "Connected" },
   "rpm-pickleball": { platform: "Shopify Collabs", platformUrl: "https://www.shopify.com/collabs/creators", commissionPct: 0.4, code: "KITCHEN", discount: "15% off", storeLink: "https://rpmpb.com/KITCHEN", connected: "Connected", notes: "Estimated — Shopify Collabs has no API; figures reconstructed from daily snapshots" },
+  stria: { platform: "Shopify Collabs", platformUrl: "https://collabs.shopify.com/home", commissionPct: 0.3, connected: "Connected", notes: "Same Collabs account as RPM; read by the Mac RPM job. Sale $ back-computed from 30%." },
   selkirk: { platform: "Selkirk Circle", platformUrl: "https://shopify.com/70004768933/account", commissionPct: 0.15, code: "INF-KITCHEN", discount: "Bonus Bucks", storeLink: "https://selkirk.com/?circle_aff=inf-kitchen", connected: "Connected" },
   sixzero: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/six-zero-7668", commissionPct: 0.15, code: "KITCHEN", discount: "10% off", storeLink: "https://www.sixzeropickleball.com?sca_ref=4355001.YZeYJiXGHC", connected: "Connected" },
   slamit: { platform: "GoAffPro", platformUrl: "https://slamit.goaffpro.com/", commissionPct: 0.2, code: "THEKITCHEN", discount: "15% off", storeLink: "https://slamit.com/pages/pickleball?ref=THEKITCHEN", connected: "Connected" },
@@ -111,6 +112,7 @@ export const CONTRACT_STARTS: Record<string, string> = {
   honcho: "2026-03-16",
   honolulu: "2026-10-06",
   sixzero: "2026-10-06",
+  stria: "2026-11-09",
 };
 
 /**
