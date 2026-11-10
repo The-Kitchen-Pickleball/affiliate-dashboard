@@ -114,6 +114,23 @@ function LoginModal({
   );
 }
 
+/**
+ * This brand's page in the Partners section (kitchen-social app, same domain).
+ * Its URL is the slugified Notion partner name; a few sheet names differ from
+ * the partner name and are mapped here. An unknown slug just shows Partners.
+ */
+const PARTNER_NAME: Record<string, string> = {
+  "enhance pickleball": "enhance",
+  "rpm pickleball": "rpm",
+  "joola bundles": "joola",
+  "paddletek pickleball": "paddletek",
+};
+function partnerPageUrl(advertiser: string) {
+  const name = PARTNER_NAME[advertiser.toLowerCase()] ?? advertiser;
+  const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return `/partners/${slug}`;
+}
+
 export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserId: string; advertiser: string; onBack?: () => void }) {
   const p = getBrandProfile(advertiserId);
   const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
@@ -195,6 +212,14 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         </button>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <a
+            href={partnerPageUrl(advertiser)}
+            onClick={(e) => e.stopPropagation()}
+            title="Open this brand on the Partners dashboard"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
+          >
+            Partner page <span aria-hidden className="text-[10px] opacity-60">↗</span>
+          </a>
           {onBack && (
             <button
               onClick={(e) => {
