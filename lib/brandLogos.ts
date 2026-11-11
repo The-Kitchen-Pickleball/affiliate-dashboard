@@ -46,6 +46,7 @@ const LOGO_FILE: Record<string, string> = {
   kitchenblockers: "kitchen-blockers.jpg",
   luzz: "luzz.jpg",
   mark: "/logos/mark.jpg",
+  stria: "/logos/stria.png", // from its Shopify Collabs brand card (not a kitchen-social partner)
   neonic: "neonic.jpg",
   nox: "nox.jpg",
   paddletek: "paddletek.jpg",
