@@ -136,6 +136,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
   const [creds, setCreds] = useState<{ email: string | null; password: string | null } | null>(null);
   const [open, setOpen] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
+  const [menu, setMenu] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -184,40 +185,45 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             <span className="hidden sm:inline">{status.label}</span>
           </span>
         )}
-        {/* Platform link + login live up here to use the top-row space */}
-        {p.platformUrl ? (
-          <a
-            href={p.platformUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+        {/* Platform + login tucked into one menu so the header stays quiet */}
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setMenu((v) => !v)}
+            aria-expanded={menu}
             className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
             style={{ color: "var(--brand)" }}
           >
             {p.platform}
-            <span aria-hidden className="text-[10px] opacity-60">↗</span>
-          </a>
-        ) : (
-          <span className="text-sm text-text-secondary">{p.platform}</span>
-        )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowLogin(true);
-          }}
-          title="Show affiliate login"
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-0.5 text-xs font-medium text-text-secondary hover:bg-surface-2"
-        >
-          🔑<span className="hidden sm:inline"> Login</span>
-        </button>
-        <a
-          href={partnerPageUrl(advertiser)}
-          onClick={(e) => e.stopPropagation()}
-          title="Open this brand on the Partners dashboard"
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-0.5 text-xs font-medium text-text-secondary hover:bg-surface-2"
-        >
-          🤝<span className="hidden sm:inline"> Partner page</span>
-        </a>
+            <span aria-hidden className="text-[10px] opacity-60">▾</span>
+          </button>
+          {menu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} />
+              <div className="absolute left-0 top-full z-20 mt-1 min-w-44 overflow-hidden rounded-lg border border-border bg-surface py-1 text-sm shadow-lg">
+                {p.platformUrl && (
+                  <a
+                    href={p.platformUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenu(false)}
+                    className="block px-3 py-1.5 hover:bg-surface-2"
+                  >
+                    Open {p.platform} <span aria-hidden className="text-[10px] opacity-60">↗</span>
+                  </a>
+                )}
+                <button
+                  onClick={() => {
+                    setMenu(false);
+                    setShowLogin(true);
+                  }}
+                  className="block w-full px-3 py-1.5 text-left hover:bg-surface-2"
+                >
+                  🔑 Show login
+                </button>
+              </div>
+            </>
+          )}
+        </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {onBack && (
@@ -249,6 +255,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             <Field label="Commission" value={pct} />
             <Field label="Discount" value={codeText ?? "—"} />
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
+            <Field label="Partner" value="Partner page" href={partnerPageUrl(advertiser)} />
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
