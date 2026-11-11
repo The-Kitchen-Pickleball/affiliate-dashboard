@@ -155,14 +155,14 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
   const codeText = p.code && p.code !== "NA" ? p.code + (p.discount ? ` · ${p.discount}` : "") : null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+    <div className="rounded-xl border border-border bg-surface">
       {/* Header — clicking anywhere on this row collapses/expands the card.
           The Login and back buttons stop propagation so they don't toggle it. */}
       <div
         onClick={() => setOpen((v) => !v)}
         role="button"
         aria-expanded={open}
-        className="flex cursor-pointer items-center gap-2 px-4 py-3 hover:bg-surface-2"
+        className="flex cursor-pointer items-center gap-2 rounded-xl px-4 py-3 hover:bg-surface-2"
       >
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         {(() => {
@@ -199,7 +199,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
           {menu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} />
-              <div className="absolute left-0 top-full z-20 mt-1 min-w-44 overflow-hidden rounded-lg border border-border bg-surface py-1 text-sm shadow-lg">
+              <div className="absolute left-0 top-full z-20 mt-1 w-max overflow-hidden whitespace-nowrap rounded-lg border border-border bg-surface py-1 text-sm shadow-lg">
                 {p.platformUrl && (
                   <a
                     href={p.platformUrl}
