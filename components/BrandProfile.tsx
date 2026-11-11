@@ -210,16 +210,16 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
         >
           🔑<span className="hidden sm:inline"> Login</span>
         </button>
+        <a
+          href={partnerPageUrl(advertiser)}
+          onClick={(e) => e.stopPropagation()}
+          title="Open this brand on the Partners dashboard"
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-0.5 text-xs font-medium text-text-secondary hover:bg-surface-2"
+        >
+          🤝<span className="hidden sm:inline"> Partner page</span>
+        </a>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <a
-            href={partnerPageUrl(advertiser)}
-            onClick={(e) => e.stopPropagation()}
-            title="Open this brand on the Partners dashboard"
-            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
-          >
-            Partner page <span aria-hidden className="text-[10px] opacity-60">↗</span>
-          </a>
           {onBack && (
             <button
               onClick={(e) => {
