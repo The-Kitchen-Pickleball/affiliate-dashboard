@@ -125,11 +125,68 @@ const PARTNER_NAME: Record<string, string> = {
   "joola bundles": "joola",
   "paddletek pickleball": "paddletek",
 };
-function partnerPageUrl(advertiser: string) {
+function partnerSlug(advertiser: string) {
   const name = PARTNER_NAME[advertiser.toLowerCase()] ?? advertiser;
-  const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  return `/partners/${slug}`;
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
+function partnerPageUrl(advertiser: string) {
+  return `/partners/${partnerSlug(advertiser)}`;
+}
+
+/**
+ * Partner tier by partner slug — a snapshot of the Notion Partners DB (via
+ * kitchen-social's partners table) taken 2026-11-10. Notion is the source of
+ * truth; if a tier changes there, update it here.
+ */
+const PARTNER_TIER: Record<string, string> = {
+  "11six24": "Preferred Partner",
+  "aireo": "Affiliate",
+  "bread-butter": "Affiliate",
+  "chorus": "Affiliate",
+  "crbn": "Affiliate",
+  "daps": "Hybrid Partner",
+  "diadem": "Affiliate",
+  "dominator": "Hybrid Partner",
+  "doordash": "Podcast Partner",
+  "enhance": "Hybrid Partner",
+  "erne": "Affiliate",
+  "flik": "Hybrid Partner",
+  "forwrd": "Affiliate",
+  "franklin": "Affiliate",
+  "friday": "Affiliate",
+  "gearbox": "Affiliate",
+  "gherkin": "Affiliate",
+  "gruvn": "Affiliate",
+  "head": "Affiliate",
+  "holbrook": "Hybrid Partner",
+  "honcho": "Preferred Partner",
+  "honolulu": "Hybrid Partner",
+  "j-pritchard": "Hybrid Partner",
+  "joola": "Preferred Partner",
+  "kitchen-blockers": "Hybrid Partner",
+  "luzz": "Affiliate",
+  "mark": "Affiliate",
+  "neonic": "Affiliate",
+  "nox": "Preferred Partner",
+  "paddletek": "Preferred Partner",
+  "pickle-money-ball": "Preferred Partner",
+  "pickleball-apes": "Affiliate",
+  "pickleball-getaways": "Hybrid Partner",
+  "podplay": "Hybrid Partner",
+  "proton": "Hybrid Partner",
+  "rpm": "Affiliate",
+  "selkirk": "Affiliate",
+  "six-zero": "Preferred Partner",
+  "slyce": "Affiliate",
+  "speedup": "Affiliate",
+  "thrive": "Hybrid Partner",
+  "tony-roig": "Hybrid Partner",
+  "upa": "Strategic Partner",
+  "vair": "Preferred Partner",
+  "vatic": "Affiliate",
+  "volair": "Affiliate",
+  "warping-point": "Hybrid Partner",
+};
 
 export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserId: string; advertiser: string; onBack?: () => void }) {
   const p = getBrandProfile(advertiserId);
@@ -255,7 +312,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             <Field label="Commission" value={pct} />
             <Field label="Discount" value={codeText ?? "—"} />
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
-            <Field label="Partner" value="Partner page" href={partnerPageUrl(advertiser)} />
+            <Field label="Partner" value={PARTNER_TIER[partnerSlug(advertiser)] ?? "Partner page"} href={partnerPageUrl(advertiser)} />
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
