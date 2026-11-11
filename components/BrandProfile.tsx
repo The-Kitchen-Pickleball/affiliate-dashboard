@@ -312,7 +312,7 @@ export function BrandProfile({ advertiserId, advertiser, onBack }: { advertiserI
             <Field label="Commission" value={pct} />
             <Field label="Discount" value={codeText ?? "—"} />
             <Field label="Store Link" value={p.storeLink ? "Visit store" : undefined} href={p.storeLink} />
-            <Field label="Partner" value={PARTNER_TIER[partnerSlug(advertiser)] ?? "Partner page"} href={partnerPageUrl(advertiser)} />
+            <Field label={PARTNER_TIER[partnerSlug(advertiser)] ?? "Partner"} value="Partner dashboard" href={partnerPageUrl(advertiser)} />
           </div>
           {p.notes && <p className="mt-3 text-xs text-text-muted">{p.notes}</p>}
         </div>
