@@ -42,6 +42,7 @@ const LOGO_FILE: Record<string, string> = {
   honcho: "honcho.jpg",
   honolulu: "honolulu.jpg",
   joola: "joola.jpg",
+  jpritchard: "j-pritchard.jpg",
   "joola-bundles": "joola.jpg",
   kitchenblockers: "kitchen-blockers.jpg",
   luzz: "luzz.jpg",
