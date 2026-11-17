@@ -31,7 +31,7 @@ export interface BrandProfile {
 
 export const BRAND_PROFILES: Record<string, BrandProfile> = {
   "11six24": { platform: "UpPromote", platformUrl: "https://af.uppromote.com/11six24-pickleball/login", commissionPct: 0.12, code: "KITCHEN", discount: "$10 off", storeLink: "https://11six24.com?sca_ref=10025104.iydezxEpou", connected: "Connected" },
-  aireo: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/qm0wg4-ay/login", commissionPct: 0.25, code: "KITCHEN", discount: "10% off", storeLink: "https://www.aireo-sports.com?sca_ref=11228945.lMdRMRhV8AObidn", connected: "Connected" },
+  aireo: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/qm0wg4-ay/login", commissionPct: 0.3, code: "KITCHEN", discount: "10% off", storeLink: "https://www.aireo-sports.com?sca_ref=11228945.lMdRMRhV8AObidn", connected: "Connected" },
   "bread-butter": { platform: "Impact", platformUrl: "https://app.impact.com/bla/Bread-and-Butter-Pickleball-Co/login.user", commissionPct: 0.1, code: "KITCHEN", discount: "10% off", storeLink: "https://breadbutterpickleballco.sjv.io/5kAnP2", connected: "Connected" },
   chorus: { platform: "UpPromote", platformUrl: "https://af.uppromote.com/647c98-4/login", commissionPct: 0.1, code: "KITCHEN", discount: "10% off", storeLink: "https://choruspickleball.com?sca_ref=10908630.QNHYm4NWZcF", connected: "Connected" },
   crbn: { platform: "SocialSnowball", platformUrl: "https://affiliates.socialsnowball.io/auth/affiliate/login", commissionPct: 0.2, code: "KITCHEN", discount: "10% off", storeLink: "https://www.crbnpickleball.com/discount/KITCHEN", connected: "Connected" },
